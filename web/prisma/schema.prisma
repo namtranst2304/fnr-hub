@@ -73,11 +73,18 @@ model ProcessLog {
 // ----------------------------------------------------------------------
 
 model Post {
-  id             String    @id @default(uuid())
-  content        String    @db.Text
-  status         String    @default("DRAFT") // DRAFT, SCHEDULED, POSTED, FAILED
-  facebookPostId String?
-  scheduledAt    DateTime? 
+  id             Int       @id @default(autoincrement())
+  sourcePostId   String    @unique 
+  originalText   String    
+  rewrittenText  String?   // Nội dung đã được AI xào xong
+  
+  // Trạng thái sẽ đi từ: REWRITTEN -> SCHEDULED -> POSTED
+  status         String    @default("DRAFT") 
+  
+  // -- CÁC TRƯỜNG MỚI ĐỂ QUẢN LÝ ĐĂNG BÀI --
+  scheduledAt    DateTime? // Thời gian bạn hẹn giờ đăng
+  fbPostId       String?   // ID bài viết trên Facebook (trả về sau khi hẹn thành công)
+  
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }

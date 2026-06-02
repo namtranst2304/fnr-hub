@@ -1,10 +1,40 @@
 import { SchedulerArea } from '@/components/scheduler/SchedulerArea';
+import prisma from '@/lib/prisma';
 
-export default function SchedulerPage() {
+export default async function SchedulerPage() {
+  let posts: any[] = [];
+  let dbError = false;
+
+  try {
+    posts = await prisma.post.findMany({
+      where: { status: 'DRAFT' }, // Or REWRITTEN if you prefer
+      orderBy: { createdAt: 'desc' }
+    });
+  } catch (error) {
+    console.error("DB Connection Error:", error);
+    dbError = true;
+    
+    // Provide a mock post so the UI can still be viewed and tested even if DB is down
+    posts = [
+      {
+        id: 999,
+        sourcePostId: "mock-123",
+        originalText: "This is a placeholder original text.",
+        rewrittenText: "Hé lô anh em! Bài viết này được AI xào tự động, sẵn sàng để lên lịch! 😎🔥",
+        status: "REWRITTEN"
+      }
+    ];
+  }
+
   return (
     <div className="flex w-full h-screen overflow-hidden bg-slate-50 text-zinc-900 font-sans">
-      <div className="w-full h-full max-w-7xl mx-auto flex">
-        <SchedulerArea />
+      <div className="w-full h-full max-w-7xl mx-auto flex flex-col">
+        {dbError && (
+          <div className="bg-orange-100 text-orange-800 px-6 py-2 text-sm font-medium border-b border-orange-200">
+            Lưu ý: Không thể kết nối tới Database. Đang hiển thị dữ liệu mẫu để bạn xem trước UI. Hãy kiểm tra file .env
+          </div>
+        )}
+        <SchedulerArea initialPosts={posts} />
       </div>
     </div>
   );
