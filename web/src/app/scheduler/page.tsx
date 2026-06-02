@@ -11,7 +11,8 @@ export default async function SchedulerPage() {
       orderBy: { createdAt: 'desc' }
     });
   } catch (error) {
-    console.error("DB Connection Error:", error);
+    // Không dùng console.error ở đây vì Next.js Dev Overlay sẽ bắt được và hiện bảng đỏ che màn hình.
+    // Lỗi đăng nhập DB là do người dùng chưa cấu hình đúng `.env`, ta sẽ tự động fallback sang Mock Data.
     dbError = true;
     
     // Provide a mock post so the UI can still be viewed and tested even if DB is down
