@@ -28,8 +28,8 @@ export default async function SchedulerPage() {
   }
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-slate-50 text-zinc-900 font-sans">
-      <div className="w-full h-full max-w-7xl mx-auto flex flex-col">
+    <div className="flex w-full h-screen overflow-hidden bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 text-zinc-900 font-sans">
+      <div className="w-full h-full max-w-7xl mx-auto flex flex-col p-4 md:p-6">
         {dbError && (
           <div className="bg-orange-100 text-orange-800 px-6 py-2 text-sm font-medium border-b border-orange-200">
             Lưu ý: Không thể kết nối tới Database. Đang hiển thị dữ liệu mẫu để bạn xem trước UI. Hãy kiểm tra file .env
