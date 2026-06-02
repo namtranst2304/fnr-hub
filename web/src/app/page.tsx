@@ -44,13 +44,22 @@ export default function HomePage() {
             The all-in-one local AI workspace for content fetching, translating, and scheduling across social platforms.
           </p>
 
-          <Link 
-            href="/chat" 
-            className="group flex items-center justify-center gap-2 bg-white/70 backdrop-blur-xl text-blue-700 px-8 py-4 rounded-full font-bold transition-all hover:bg-white hover:scale-105 active:scale-95 shadow-[0_8px_32px_rgba(59,130,246,0.15)] border border-white"
-          >
-            Open Chatbot
-            <ArrowRight className="w-4 h-4 text-blue-500 group-hover:text-blue-700 transition-colors" />
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <Link 
+              href="/chat" 
+              className="group flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-full font-bold transition-all hover:bg-blue-700 hover:scale-105 active:scale-95 shadow-md border border-transparent"
+            >
+              Open AI Chat
+              <ArrowRight className="w-4 h-4 text-blue-200 group-hover:text-white transition-colors" />
+            </Link>
+            
+            <Link 
+              href="/scheduler" 
+              className="group flex items-center justify-center gap-2 bg-white text-zinc-800 px-8 py-4 rounded-full font-bold transition-all hover:bg-zinc-50 hover:scale-105 active:scale-95 shadow-sm border border-zinc-200"
+            >
+              Post Scheduler
+            </Link>
+          </div>
         </div>
 
       </main>
