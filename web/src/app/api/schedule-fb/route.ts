@@ -5,8 +5,16 @@ export async function POST(req: Request) {
   try {
     // 1. Nhận dữ liệu từ giao diện gửi lên
     const body = await req.json();
-    const { postId, scheduledTime } = body; 
+    const { postId, scheduledTime, rewrittenText } = body; 
     // scheduledTime phải là chuỗi ISO string (VD: "2026-06-03T15:00:00.000Z")
+
+    // Cập nhật lại text nếu người dùng có sửa trên Modal
+    if (rewrittenText) {
+      await prisma.post.update({
+        where: { id: postId },
+        data: { rewrittenText }
+      });
+    }
 
     // 2. Lấy bài viết đã được AI xào nấu từ Database
     const post = await prisma.post.findUnique({

@@ -7,7 +7,6 @@ export default async function SchedulerPage() {
 
   try {
     posts = await prisma.post.findMany({
-      where: { status: 'DRAFT' }, // Or REWRITTEN if you prefer
       orderBy: { createdAt: 'desc' }
     });
   } catch (error) {

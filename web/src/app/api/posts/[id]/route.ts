@@ -1,0 +1,40 @@
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const postId = parseInt(params.id);
+    if (isNaN(postId)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
+
+    const body = await req.json();
+    const { rewrittenText } = body;
+
+    const post = await prisma.post.update({
+      where: { id: postId },
+      data: {
+        rewrittenText: rewrittenText,
+      }
+    });
+
+    return NextResponse.json({ success: true, post });
+  } catch (error) {
+    console.error("Lỗi cập nhật bài viết:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const postId = parseInt(params.id);
+    if (isNaN(postId)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
+
+    await prisma.post.delete({
+      where: { id: postId }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Lỗi xóa bài viết:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
