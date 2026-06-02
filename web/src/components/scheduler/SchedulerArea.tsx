@@ -24,6 +24,10 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
   const [scheduleTime, setScheduleTime] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Scraper State
+  const [scrapeUrl, setScrapeUrl] = useState('');
+  const [isScraping, setIsScraping] = useState(false);
+
   // Derived data
   const pendingPosts = posts.filter(p => p.status === 'DRAFT' || p.status === 'REWRITTEN');
   const scheduledPosts = posts.filter(p => p.status === 'SCHEDULED' || p.status === 'POSTED' || p.status === 'FAILED');
@@ -45,6 +49,33 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
     setSelectedPost(null);
     setEditedText('');
     setScheduleTime('');
+  };
+
+  const handleScrape = async () => {
+    if (!scrapeUrl) {
+      alert("Vui lòng nhập URL Facebook!");
+      return;
+    }
+    setIsScraping(true);
+    try {
+      // Gọi sang FastAPI Backend (chạy port 8000)
+      const res = await fetch('http://localhost:8000/api/trigger-scraper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: scrapeUrl })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Cào thành công! Vui lòng Refresh (F5) trang để xem bài viết mới trong Hàng đợi.");
+        setScrapeUrl('');
+      } else {
+        alert("Lỗi cào dữ liệu: " + (data.detail || data.error));
+      }
+    } catch (err: any) {
+      alert("Không thể kết nối tới Python Backend (localhost:8000). Hãy chắc chắn bạn đã chạy FastAPI: " + err.message);
+    } finally {
+      setIsScraping(false);
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -135,30 +166,51 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-white/30 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] rounded-3xl overflow-hidden border border-white/50 relative">
       {/* Header & Tabs */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-white/40 shrink-0 bg-white/40 backdrop-blur-md gap-4">
+      <header className="flex flex-col xl:flex-row xl:items-center justify-between px-6 py-4 border-b border-white/40 shrink-0 bg-white/40 backdrop-blur-md gap-4">
         <div className="flex items-center">
           <Calendar className="w-5 h-5 mr-3 text-blue-700" />
           <span className="font-bold text-lg text-blue-950">CMS Content Scheduler</span>
         </div>
         
-        <div className="flex bg-white/50 p-1 rounded-xl shadow-sm border border-white/60">
-          <button 
-            onClick={() => setActiveTab('pending')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'pending' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-900/60 hover:text-blue-800'}`}
-          >
-            <List className="w-4 h-4" />
-            Hàng đợi duyệt ({pendingPosts.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('scheduled')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'scheduled' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-900/60 hover:text-blue-800'}`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            Lịch phát sóng ({scheduledPosts.length})
-          </button>
+        <div className="flex flex-col sm:flex-row gap-4 items-center flex-1 justify-center">
+          {/* Tabs */}
+          <div className="flex bg-white/50 p-1 rounded-xl shadow-sm border border-white/60">
+            <button 
+              onClick={() => setActiveTab('pending')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'pending' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-900/60 hover:text-blue-800'}`}
+            >
+              <List className="w-4 h-4" />
+              Hàng đợi duyệt ({pendingPosts.length})
+            </button>
+            <button 
+              onClick={() => setActiveTab('scheduled')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'scheduled' ? 'bg-white text-blue-700 shadow-sm' : 'text-blue-900/60 hover:text-blue-800'}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Lịch phát sóng ({scheduledPosts.length})
+            </button>
+          </div>
+
+          {/* Scraper Input */}
+          <div className="flex bg-white/50 p-1 rounded-xl shadow-sm border border-white/60">
+            <input 
+              type="text" 
+              placeholder="Nhập URL Facebook (Post/Page)..."
+              value={scrapeUrl}
+              onChange={(e) => setScrapeUrl(e.target.value)}
+              className="px-4 py-2 bg-transparent text-sm font-medium outline-none text-blue-900 placeholder:text-blue-900/40 w-full sm:w-64"
+            />
+            <button 
+              onClick={handleScrape}
+              disabled={isScraping}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {isScraping ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Cào & Xào"}
+            </button>
+          </div>
         </div>
 
-        <a href="/" className="text-sm font-medium text-blue-900/70 hover:text-blue-900 transition-colors hidden sm:block">
+        <a href="/" className="text-sm font-medium text-blue-900/70 hover:text-blue-900 transition-colors hidden xl:block">
           &larr; Exit
         </a>
       </header>

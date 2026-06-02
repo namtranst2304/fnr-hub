@@ -2,3 +2,7 @@ fastapi
 uvicorn
 httpx
 pydantic
+facebook-scraper
+psycopg2-binary
+google-generativeai
+python-dotenv
