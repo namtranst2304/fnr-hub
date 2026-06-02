@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------
+// CHATBOT MODELS
+// ----------------------------------------------------------------------
+
+model Conversation {
+  id        String    @id @default(uuid())
+  title     String    @default("New Chat")
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // "user", "assistant", "system"
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+}
+
+// ----------------------------------------------------------------------
+// REPOSTING APP MODELS (For future features)
+// ----------------------------------------------------------------------
+
+model Article {
+  id        String       @id @default(uuid())
+  title     String
+  content   String?      @db.Text
+  status    String       @default("PENDING") // PENDING, PROCESSING, COMPLETED
+  chapters  Chapter[]
+  logs      ProcessLog[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Chapter {
+  id                String   @id @default(uuid())
+  articleId         String
+  article           Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  chapterNumber     Int
+  title             String?
+  content           String   @db.Text
+  translatedContent String?  @db.Text
+  status            String   @default("PENDING") // PENDING, TRANSLATED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ProcessLog {
+  id        String   @id @default(uuid())
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  action    String   // e.g. "START_TRANSLATION", "CHAPTER_DIVIDED"
+  message   String   @db.Text
+  status    String   // "INFO", "ERROR", "SUCCESS"
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # 1. Bộ não Local (Dịch thuật, phân chia chương)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  # 2. Cơ sở dữ liệu (Lưu bài viết, log tiến trình)
+  postgres:
+    image: postgres:15-alpine
+    container_name: app-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: automation_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  pg_data:
