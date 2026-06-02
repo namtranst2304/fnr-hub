@@ -1,28 +1,17 @@
 import os
 import re
-import json
 import psycopg2
-from facebook_scraper import get_posts
 import google.generativeai as genai
 from dotenv import load_dotenv
+from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
+import time
+import random
 
 load_dotenv()
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
-
-def extract_post_id(url: str) -> str:
-    """Try to extract a post ID from a Facebook URL."""
-    # This is a naive extraction for common URL patterns
-    # e.g., facebook.com/page/posts/123456789 or facebook.com/123456789
-    match = re.search(r'(?:posts/|fbid=)([a-zA-Z0-9]+)', url)
-    if match:
-        return match.group(1)
-    
-    match = re.search(r'/([0-9]{8,})/?', url)
-    if match:
-        return match.group(1)
-    return ""
 
 def rewrite_text_with_ai(original_text: str) -> str:
     """Uses Google Gemini to rewrite the text."""
@@ -42,49 +31,77 @@ def rewrite_text_with_ai(original_text: str) -> str:
         print(f"Lỗi AI: {e}")
         return "Lỗi khi xào bài bằng AI: " + str(e)
 
+def extract_post_id(url: str) -> str:
+    """Extract a unique post ID from URL for deduplication."""
+    match = re.search(r'(?:posts/|fbid=)([a-zA-Z0-9]+)', url)
+    if match: return match.group(1)
+    match = re.search(r'/([0-9]{8,})/?', url)
+    if match: return match.group(1)
+    return str(hash(url))
+
+def scrape_with_playwright(url: str) -> str:
+    """Uses Playwright in stealth mode with user_data_dir to scrape FB post text."""
+    session_dir = os.path.abspath("./fb_session")
+    
+    with sync_playwright() as p:
+        # headless=True for automated background run
+        browser = p.chromium.launch_persistent_context(
+            user_data_dir=session_dir,
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled"]
+        )
+        
+        page = browser.new_page()
+        stealth_sync(page)
+        
+        # Add a random delay to act human
+        time.sleep(random.uniform(1, 3))
+        
+        print(f"Playwright navigated to: {url}")
+        page.goto(url, wait_until="domcontentloaded")
+        
+        # Wait for either the specific message div OR the main content area
+        # Facebook's DOM is highly obfuscated. We try multiple selectors.
+        content = ""
+        try:
+            # Tactic 1: The user's suggested div
+            page.wait_for_selector('div[data-ad-preview="message"]', timeout=10000)
+            content = page.inner_text('div[data-ad-preview="message"]')
+        except Exception:
+            print("Không tìm thấy data-ad-preview, thử selector khác...")
+            try:
+                # Tactic 2: Generic post text area (often has dir="auto" inside a usercontent div)
+                # We wait for the page to settle
+                time.sleep(3)
+                elements = page.query_selector_all('div[data-ad-comet-preview="message"], div[dir="auto"]')
+                
+                # Filter out small UI elements, get the longest text block which is likely the post
+                texts = [el.inner_text() for el in elements if el and el.inner_text().strip()]
+                if texts:
+                    content = max(texts, key=len)
+            except Exception as e2:
+                print("Lỗi cào thẻ:", e2)
+
+        browser.close()
+        return content.strip()
+
 def scrape_and_process_url(fb_url: str) -> dict:
-    """Scrapes a given Facebook post URL, rewrites it, and saves to DB."""
+    """Scrapes a given Facebook post URL using Playwright, rewrites it, and saves to DB."""
     try:
-        # Determine if it's a page or post. We'll try to extract the post ID.
-        post_id_to_fetch = extract_post_id(fb_url)
+        source_id = extract_post_id(fb_url)
         
-        post_data = None
-        
-        # Try fetching by post ID directly if found
-        if post_id_to_fetch:
-            print(f"Trying to fetch post ID: {post_id_to_fetch}")
-            # get_posts can take post_urls
-            for post in get_posts(post_urls=[fb_url], options={"comments": False}):
-                post_data = post
-                break
-        
-        # Fallback to fetching page (if URL is a page URL) and grabbing the first post
-        if not post_data:
-            # Extract page name (e.g. facebook.com/pagename)
-            page_match = re.search(r'facebook\.com/([^/]+)', fb_url)
-            if page_match:
-                page_name = page_match.group(1)
-                if page_name not in ['groups', 'watch', 'events', 'marketplace']:
-                    print(f"Trying to fetch latest post from page: {page_name}")
-                    for post in get_posts(page_name, pages=1, options={"comments": False}):
-                        post_data = post
-                        break
-                        
-        if not post_data:
-            return {"success": False, "error": "Không thể cào dữ liệu từ URL này. Có thể bài viết bị riêng tư hoặc thư viện bị block."}
-            
-        original_text = post_data.get('text', '')
-        source_id = post_data.get('post_id', post_id_to_fetch or str(hash(fb_url)))
+        print("Bắt đầu cào dữ liệu bằng Playwright...")
+        original_text = scrape_with_playwright(fb_url)
         
         if not original_text:
-             return {"success": False, "error": "Cào thành công nhưng bài viết không có chữ (chỉ có ảnh/video)."}
+             return {"success": False, "error": "Playwright không tìm thấy nội dung bài viết. Có thể do chưa Login hoặc Facebook thay đổi giao diện."}
              
         # Rewrite with AI
+        print("Cào thành công, đang xào bài bằng AI...")
         rewritten_text = rewrite_text_with_ai(original_text)
         
         # Save to DB
         db_url = os.getenv("DATABASE_URL")
-        # psycopg2 connection expects standard URL without Prisma connection limits sometimes, but it should work
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
         

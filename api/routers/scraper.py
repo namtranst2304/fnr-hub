@@ -8,7 +8,7 @@ class ScrapeRequest(BaseModel):
     url: str
 
 @router.post("/api/trigger-scraper")
-async def trigger_scraper(req: ScrapeRequest):
+def trigger_scraper(req: ScrapeRequest):
     result = scrape_and_process_url(req.url)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error"))
