@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ----------------------------------------------------------------------
@@ -67,4 +66,18 @@ model ProcessLog {
   message   String   @db.Text
   status    String   // "INFO", "ERROR", "SUCCESS"
   createdAt DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------
+// FACEBOOK POSTING MODELS
+// ----------------------------------------------------------------------
+
+model Post {
+  id             String    @id @default(uuid())
+  content        String    @db.Text
+  status         String    @default("DRAFT") // DRAFT, SCHEDULED, POSTED, FAILED
+  facebookPostId String?
+  scheduledAt    DateTime? 
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
