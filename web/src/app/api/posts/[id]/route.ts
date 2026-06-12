@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { UpdatePostDto } from '@/lib/dto';
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -8,7 +9,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (isNaN(postId)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
     const body = await req.json();
-    const { rewrittenText } = body;
+    const validation = UpdatePostDto.safeParse(body);
+    
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+    }
+
+    const { rewrittenText } = validation.data;
 
     const post = await prisma.post.update({
       where: { id: postId },

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { CreateSourceDto } from '@/lib/dto';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -18,10 +19,16 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const validation = CreateSourceDto.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+    }
+
     const res = await fetch(`${API_BASE}/api/sources`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(validation.data),
     });
     const data = await res.json();
     if (!res.ok) {

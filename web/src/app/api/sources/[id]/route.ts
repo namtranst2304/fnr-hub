@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { UpdateSourceDto } from '@/lib/dto';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -9,10 +10,16 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await req.json();
+    const validation = UpdateSourceDto.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+    }
+
     const res = await fetch(`${API_BASE}/api/sources/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(validation.data),
     });
     const data = await res.json();
     if (!res.ok) {

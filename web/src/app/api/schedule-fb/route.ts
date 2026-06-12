@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { ScheduleFbPostDto } from '@/lib/dto';
 
 export async function POST(req: Request) {
   try {
-    // 1. Receive data from frontend
+    // 1. Receive and validate data using DTO
     const body = await req.json();
-    const { postId, scheduledTime, rewrittenText } = body; 
-    // scheduledTime must be an ISO string (e.g. "2026-06-03T15:00:00.000Z")
+    const validation = ScheduleFbPostDto.safeParse(body);
+    
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+    }
+
+    const { postId, scheduledTime, rewrittenText } = validation.data; 
 
     // Update text if the user modified it in the Modal
     if (rewrittenText) {

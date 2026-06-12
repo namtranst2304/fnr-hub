@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { CreatePostDto } from '@/lib/dto';
 
 export async function POST(req: Request) {
   try {
     const data = await req.json();
-    const { originalText, rewrittenText } = data;
-
-    if (!originalText) {
-      return NextResponse.json({ error: 'Missing originalText' }, { status: 400 });
+    const validation = CreatePostDto.safeParse(data);
+    
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
     }
+
+    const { originalText, rewrittenText } = validation.data;
 
     const newPost = await prisma.post.create({
       data: {
