@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "FNR Scheduler",
-  description: "Hệ thống tự động cào và xào nấu bài viết Facebook bằng AI",
+  description: "Automated system to scrape and rewrite Facebook posts using AI",
 };
 
 export default function RootLayout({

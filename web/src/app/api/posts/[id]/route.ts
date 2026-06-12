@@ -19,7 +19,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json({ success: true, post });
   } catch (error) {
-    console.error("Lỗi cập nhật bài viết:", error);
+    console.error("Error updating post:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -36,7 +36,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Lỗi xóa bài viết:", error);
+    console.error("Error deleting post:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

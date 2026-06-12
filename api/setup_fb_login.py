@@ -4,10 +4,10 @@ import os
 
 def setup_facebook_session():
     print("="*60)
-    print("BƯỚC 1: KHỞI TẠO PHIÊN ĐĂNG NHẬP FACEBOOK (CHỈ CẦN LÀM 1 LẦN)")
-    print("Trình duyệt sẽ mở ra. Hãy đăng nhập vào Facebook bằng tay.")
-    print("Sau khi đăng nhập xong và thấy bảng tin (News Feed), hãy đóng trình duyệt lại.")
-    print("Cookie sẽ được tự động lưu vào thư mục 'fb_session' để cào dữ liệu sau này.")
+    print("STEP 1: INITIALIZE FACEBOOK LOGIN SESSION (ONLY DO THIS ONCE)")
+    print("The browser will open. Please login to Facebook manually.")
+    print("After logging in and seeing the News Feed, close the browser.")
+    print("The cookie will be automatically saved to the 'fb_session' folder for later scraping.")
     print("="*60)
     
     # Ensure directory exists
@@ -16,14 +16,14 @@ def setup_facebook_session():
     with sync_playwright() as p:
         browser = p.chromium.launch_persistent_context(
             user_data_dir="./fb_session",
-            headless=False, # Hiện trình duyệt để login tay
+            headless=False, # Show browser for manual login
             viewport={"width": 1280, "height": 720}
         )
         
         page = browser.new_page()
         page.goto("https://www.facebook.com/")
         
-        print("Đang chờ bạn thao tác... Đóng trình duyệt khi đã login thành công.")
+        print("Waiting for your action... Close the browser once logged in successfully.")
         
         # Wait indefinitely until the user closes the browser
         try:
@@ -31,7 +31,7 @@ def setup_facebook_session():
         except Exception:
             pass
             
-        print("Đã đóng trình duyệt. Phiên đăng nhập (Cookie) đã được lưu!")
+        print("Browser closed. Login session (Cookie) has been saved!")
 
 if __name__ == "__main__":
     setup_facebook_session()

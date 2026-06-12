@@ -21,7 +21,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('Ảnh quá lớn. Vui lòng chọn ảnh < 5MB.');
+      setError('Image too large. Please select an image < 5MB.');
       return;
     }
 
@@ -45,7 +45,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      setError('Vui lòng nhập nội dung cần tạo (Prompt).');
+      setError('Please enter a prompt.');
       return;
     }
 
@@ -57,10 +57,10 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
       if (res.success && res.content) {
         setGeneratedText(res.content);
       } else {
-        setError(res.error || 'Lỗi không xác định khi tạo nội dung.');
+        setError(res.error || 'Unknown error occurred while generating.');
       }
     } catch (err: any) {
-      setError(err.message || 'Không thể kết nối đến máy chủ AI.');
+      setError(err.message || 'Failed to connect to AI server.');
     } finally {
       setIsGenerating(false);
     }
@@ -83,7 +83,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
           AI Post Generator
         </h2>
         <p className="text-slate-400 text-sm mb-6">
-          Nhập prompt hoặc tải ảnh lên để AI tự động sáng tạo nội dung mà không cần cào bài từ nguồn khác.
+          Enter a prompt or upload an image to let AI generate new content automatically without scraping.
         </p>
 
         {error && (
@@ -95,12 +95,12 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Chỉ thị (Prompt) <span className="text-red-400">*</span>
+              Prompt <span className="text-red-400">*</span>
             </label>
             <textarea
               className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none"
               rows={4}
-              placeholder="VD: Viết một bài review hài hước về chiếc tai nghe Airpods 4 mới ra mắt..."
+              placeholder="e.g.: Write a funny review about the newly released AirPods 4..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
@@ -108,7 +108,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Hình ảnh đính kèm (Tùy chọn)
+              Attached Image (Optional)
             </label>
             <div className="flex items-center gap-4">
               <input
@@ -123,7 +123,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
                 className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-600 transition-colors text-sm"
               >
                 <ImageIcon size={16} />
-                Chọn Ảnh
+                Select Image
               </button>
               
               {imageName && (
@@ -150,12 +150,12 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
             {isGenerating ? (
               <>
                 <Loader2 size={20} className="animate-spin" />
-                Đang vận công sáng tác...
+                GENERATING CONTENT...
               </>
             ) : (
               <>
                 <Bot size={20} />
-                Tạo Nội Dung Ngay
+                GENERATE NOW
               </>
             )}
           </button>
@@ -166,7 +166,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
         <div className="bg-slate-900/50 backdrop-blur-sm p-6 rounded-xl border border-green-500/20 shadow-lg shadow-green-500/5 animate-in fade-in slide-in-from-bottom-4">
           <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mb-4">
             <Sparkles className="text-green-400" size={20} />
-            Kết Quả Sáng Tác
+            Generated Result
           </h3>
           <div className="bg-slate-950 rounded-lg p-4 text-slate-300 whitespace-pre-wrap font-mono text-sm border border-slate-800">
             {generatedText}
@@ -177,7 +177,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
               className="flex items-center gap-2 border border-[#fce205] text-[#fce205] hover:bg-[#fce205]/20 px-6 py-2.5 font-bold uppercase tracking-wider transition-all shadow-[0_0_10px_rgba(252,226,5,0.2)] hover:shadow-[0_0_15px_rgba(252,226,5,0.4)] bg-transparent"
             >
               <Send size={18} />
-              Lưu vào Hàng Đợi (Pending)
+              Save to Pending Queue
             </button>
           </div>
         </div>

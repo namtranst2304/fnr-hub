@@ -119,7 +119,7 @@ def get_auto_config() -> dict:
             if row:
                 return dict(row)
             # Create default row
-            default_prompt = "Dịch và viết lại đoạn văn bản sau bằng tiếng Việt theo phong cách Gen Z mặn mòi, chèn emoji hợp lý, giữ nguyên ý chính."
+            default_prompt = "Translate and rewrite the following text in English using a Gen Z humor style, inserting appropriate emojis, while keeping the main idea."
             cur.execute(
                 '''INSERT INTO "AutoPostConfig" (id, "autoScrapeOn", "autoPostOn", "postIntervalMin", "scrapeIntervalMin", "aiPromptRules", "updatedAt")
                    VALUES (1, FALSE, FALSE, 120, 30, %s, NOW())

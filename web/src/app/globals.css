@@ -23,8 +23,8 @@ html, body {
 }
 
 /* 
- * 2. TIỆN ÍCH ẨN THANH CUỘN NHƯNG VẪN CHO PHÉP CUỘN BẰNG CHUỘT
- * Dành cho Chat Area & Sidebar History
+ * 2. UTILITY TO HIDE SCROLLBAR BUT ALLOW SCROLLING
+ * For Chat Area & Sidebar History
  */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -35,9 +35,9 @@ html, body {
 }
 
 /* 
- * 3. FIX LỖI FLEXBOX AUTO-MARGIN BỊ TRÀN LÊN TRÊN
+ * 3. FIX FLEXBOX AUTO-MARGIN OVERFLOW
  */
 .chat-empty-state {
-  margin: auto; /* Căn giữa hoàn hảo */
-  /* Không dùng h-full ở đây để tránh thẻ div tự phình to hơn nội dung */
+  margin: auto; /* Perfect centering */
+  /* Do not use h-full here to prevent div from expanding larger than content */
 }

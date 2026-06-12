@@ -32,7 +32,7 @@ export function SettingsTab({
     setIsSavingPrompt(true);
     await handleUpdateInterval('aiPromptRules', localPrompt);
     setIsSavingPrompt(false);
-    toast.success('Đã lưu quy tắc AI!');
+    toast.success('AI Rules saved!');
   };
 
   // Helper component to avoid duplication
@@ -135,23 +135,23 @@ export function SettingsTab({
           <Cpu className="w-4 h-4" /> AI_PROMPT_BUILDER (RULES)
         </h3>
         <p className="text-[10px] text-zinc-400 leading-relaxed mb-4">
-          Thiết lập quy tắc ("System Instruction") cho AI khi xào bài tự động hoặc tạo bài mới. Bạn có thể quy định giọng văn, thêm hashtag, emoji bắt buộc ở đây.
+          Set up "System Instruction" for AI when rewriting or generating new posts. You can define the tone, add mandatory hashtags, or specify emojis here.
         </p>
         <textarea
           value={localPrompt}
           onChange={(e) => setLocalPrompt(e.target.value)}
-          placeholder="VD: Dịch và viết lại đoạn văn bản sau bằng tiếng Việt theo phong cách Gen Z mặn mòi..."
+          placeholder="e.g.: Translate and rewrite the following text in English using a Gen Z humor style..."
           className="w-full bg-black border border-[#00f3ff]/50 focus:border-[#00f3ff] text-[#00f3ff] p-4 outline-none text-sm font-mono min-h-[120px] transition-colors shadow-[inset_0_0_10px_rgba(0,243,255,0.05)]"
         />
         <div className="flex justify-between items-center mt-4">
-          <span className="text-[10px] text-[#00f3ff]/70 italic">* Vui lòng ấn LƯU sau khi chỉnh sửa</span>
+          <span className="text-[10px] text-[#00f3ff]/70 italic">* Please click SAVE after editing</span>
           <button
             onClick={handleSavePrompt}
             disabled={isSavingPrompt || localPrompt === config.aiPromptRules}
             className="flex items-center gap-2 px-6 py-2 bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff] hover:bg-[#00f3ff]/40 hover:shadow-[0_0_15px_rgba(0,243,255,0.4)] transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSavingPrompt ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isSavingPrompt ? 'ĐANG LƯU...' : 'LƯU QUY TẮC'}
+            {isSavingPrompt ? 'SAVING...' : 'SAVE RULES'}
           </button>
         </div>
       </div>

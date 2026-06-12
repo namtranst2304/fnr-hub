@@ -120,7 +120,7 @@ export function EditorModal({
             <button
               onClick={handleAutoQueue}
               disabled={isLoading || !config.autoPostOn}
-              title={!config.autoPostOn ? 'Bật Auto Post trong Cài đặt trước' : 'Tự động tính toán giờ đăng tiếp theo'}
+              title={!config.autoPostOn ? 'Enable Auto Post in Settings first' : 'Automatically calculate next schedule time'}
               className="bg-[#ff00ff]/20 border border-[#ff00ff] hover:bg-[#ff00ff] text-[#ff00ff] hover:text-black px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 ease-out shadow-[0_0_10px_rgba(255,0,255,0.2)] disabled:opacity-50 disabled:grayscale"
             >
               AUTO_ENQUEUE

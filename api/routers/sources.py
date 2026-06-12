@@ -46,7 +46,7 @@ def add_source(req: CreateSourceRequest):
         return {"success": True, "source": source}
     except Exception as e:
         if "unique" in str(e).lower() or "duplicate" in str(e).lower():
-            raise HTTPException(status_code=409, detail="URL này đã tồn tại!")
+            raise HTTPException(status_code=409, detail="This URL already exists!")
         raise HTTPException(status_code=500, detail=str(e))
 
 

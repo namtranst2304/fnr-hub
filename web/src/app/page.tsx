@@ -10,8 +10,8 @@ export default async function SchedulerPage() {
       orderBy: { createdAt: 'desc' }
     });
   } catch (error) {
-    // Không dùng console.error ở đây vì Next.js Dev Overlay sẽ bắt được và hiện bảng đỏ che màn hình.
-    // Lỗi đăng nhập DB là do người dùng chưa cấu hình đúng `.env`, ta sẽ tự động fallback sang Mock Data.
+    // Not using console.error here because Next.js Dev Overlay will catch it and show a red screen.
+    // DB login error is due to user not configuring .env properly, automatically fallback to Mock Data.
     dbError = true;
     
     // Provide a mock post so the UI can still be viewed and tested even if DB is down
@@ -20,7 +20,7 @@ export default async function SchedulerPage() {
         id: 999,
         sourcePostId: "mock-123",
         originalText: "This is a placeholder original text.",
-        rewrittenText: "Hé lô anh em! Bài viết này được AI xào tự động, sẵn sàng để lên lịch! 😎🔥",
+        rewrittenText: "Hello folks! This post was automatically rewritten by AI, ready to be scheduled! 😎🔥",
         status: "REWRITTEN"
       }
     ];

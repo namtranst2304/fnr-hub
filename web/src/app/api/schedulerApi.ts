@@ -61,7 +61,7 @@ export const schedulerApi = {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.detail || data.error || 'Lỗi server scraper');
+      throw new Error(data.detail || data.error || 'Scraper server error');
     }
     return res.json();
   },

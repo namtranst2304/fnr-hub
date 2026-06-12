@@ -17,7 +17,7 @@ from services.db import get_auto_config
 def rewrite_text_with_ai(original_text: str) -> str:
     """Uses Google Gemini to rewrite the text."""
     if not original_text or len(original_text) < 10:
-        return "Nội dung quá ngắn để xào nấu."
+        return "Content is too short to be rewritten."
     
     models_to_try = ["gemini-3.5-flash", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
     max_retries_per_model = 2
@@ -35,15 +35,15 @@ def rewrite_text_with_ai(original_text: str) -> str:
         
         for attempt in range(max_retries_per_model):
             try:
-                response = model.generate_content(f"Văn bản gốc:\n{original_text}")
+                response = model.generate_content(f"Original text:\n{original_text}")
                 if response and response.text:
                     return response.text.strip()
             except Exception as e:
                 last_error = e
-                print(f"Lỗi AI ({model_name} - Lần {attempt + 1}): {e}")
+                print(f"AI Error ({model_name} - Attempt {attempt + 1}): {e}")
                 time.sleep(2 ** attempt) # Retry sau 1s, 2s...
                 
-    return f"Lỗi khi xào bài bằng AI sau nhiều lần thử: {last_error}"
+    return f"Failed to rewrite post after multiple attempts: {last_error}"
 
 def extract_post_id(url: str) -> str:
     """Extract a unique post ID from URL for deduplication."""
@@ -81,7 +81,7 @@ def scrape_with_playwright(url: str) -> str:
             page.wait_for_selector('div[data-ad-preview="message"]', timeout=10000)
             content = page.inner_text('div[data-ad-preview="message"]')
         except Exception:
-            print("Không tìm thấy data-ad-preview, thử selector khác...")
+            print("Cannot find data-ad-preview, trying another selector...")
             try:
                 # Tactic 2: Generic post text area (often has dir="auto" inside a usercontent div)
                 # We wait for the page to settle
@@ -93,7 +93,7 @@ def scrape_with_playwright(url: str) -> str:
                 if texts:
                     content = max(texts, key=len)
             except Exception as e2:
-                print("Lỗi cào thẻ:", e2)
+                print("Error scraping card:", e2)
 
         browser.close()
         return content.strip()
@@ -103,14 +103,14 @@ def scrape_and_process_url(fb_url: str) -> dict:
     try:
         source_id = extract_post_id(fb_url)
         
-        print("Bắt đầu cào dữ liệu bằng Playwright...")
+        print("Started scraping data with Playwright...")
         original_text = scrape_with_playwright(fb_url)
         
         if not original_text:
-             return {"success": False, "error": "Playwright không tìm thấy nội dung bài viết. Có thể do chưa Login hoặc Facebook thay đổi giao diện."}
+             return {"success": False, "error": "Playwright could not find post content. Maybe due to missing Login or Facebook UI change."}
              
         # Rewrite with AI
-        print("Cào thành công, đang xào bài bằng AI...")
+        print("Scrape successful, rewriting via AI...")
         rewritten_text = rewrite_text_with_ai(original_text)
         
         # Save to DB
@@ -123,7 +123,7 @@ def scrape_and_process_url(fb_url: str) -> dict:
         if cur.fetchone():
             cur.close()
             conn.close()
-            return {"success": False, "error": "Bài viết này đã được cào trước đó rồi!"}
+            return {"success": False, "error": "This post has already been scraped!"}
             
         # Insert
         insert_query = """
@@ -140,7 +140,7 @@ def scrape_and_process_url(fb_url: str) -> dict:
         
         return {
             "success": True, 
-            "message": "Cào & Xào thành công!", 
+            "message": "Scrape & Rewrite successful!", 
             "post_id": new_id,
             "source_id": source_id
         }

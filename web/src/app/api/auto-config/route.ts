@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: 'Không thể kết nối tới Python Backend' },
+      { success: false, error: 'Cannot connect to Python Backend' },
       { status: 502 }
     );
   }
@@ -30,7 +30,7 @@ export async function PUT(req: Request) {
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: 'Không thể kết nối tới Python Backend' },
+      { success: false, error: 'Cannot connect to Python Backend' },
       { status: 502 }
     );
   }

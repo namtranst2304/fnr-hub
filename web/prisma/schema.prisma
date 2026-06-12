@@ -76,16 +76,16 @@ model Post {
   id             Int         @id @default(autoincrement())
   sourcePostId   String      @unique 
   originalText   String    
-  rewrittenText  String?     // Nội dung đã được AI xào xong
+  rewrittenText  String?     // Content rewritten by AI
   
-  // Trạng thái sẽ đi từ: REWRITTEN -> SCHEDULED -> POSTED
+  // State transitions: REWRITTEN -> SCHEDULED -> POSTED
   status         String      @default("DRAFT") 
   
-  // -- CÁC TRƯỜNG QUẢN LÝ ĐĂNG BÀI --
-  scheduledAt    DateTime?   // Thời gian bạn hẹn giờ đăng
-  fbPostId       String?     // ID bài viết trên Facebook (trả về sau khi hẹn thành công)
+  // -- POST MANAGEMENT FIELDS --
+  scheduledAt    DateTime?   // Scheduled time to post
+  fbPostId       String?     // Facebook post ID (returned after successful schedule)
   
-  // -- LIÊN KẾT NGUỒN --
+  // -- SOURCE LINK --
   sourcePageId   Int?
   sourcePage     SourcePage? @relation(fields: [sourcePageId], references: [id], onDelete: SetNull)
   
@@ -97,26 +97,26 @@ model Post {
 // AUTO-POSTING MODELS
 // ----------------------------------------------------------------------
 
-// Nguồn Facebook để auto-scrape
+// Facebook source for auto-scrape
 model SourcePage {
   id          Int       @id @default(autoincrement())
   url         String    @unique   // URL page/profile FB
-  name        String               // Tên hiển thị (VD: "TechCrunch VN")
-  isActive    Boolean   @default(true) // Bật/tắt auto-scrape
-  interval    Int       @default(30)   // Scrape mỗi bao nhiêu phút
+  name        String               // Display name (e.g. "TechCrunch")
+  isActive    Boolean   @default(true) // Toggle auto-scrape
+  interval    Int       @default(30)   // Scrape interval in minutes
   lastScraped DateTime?
   posts       Post[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
 
-// Cấu hình Auto Post (singleton — chỉ 1 row)
+// Auto Post configuration (singleton — only 1 row)
 model AutoPostConfig {
   id              Int     @id @default(1)
   autoScrapeOn    Boolean @default(false)
   autoPostOn      Boolean @default(false)
-  postIntervalMin   Int       @default(120)  // Đăng mỗi bao nhiêu phút
-  scrapeIntervalMin Int       @default(30)   // Cào mỗi bao nhiêu phút
-  aiPromptRules     String?   @db.Text       // Quy tắc sáng tác AI (Prompt Builder)
+  postIntervalMin   Int       @default(120)  // Post interval in minutes
+  scrapeIntervalMin Int       @default(30)   // Scrape interval in minutes
+  aiPromptRules     String?   @db.Text       // AI prompt generator rules
   updatedAt         DateTime  @updatedAt
 }
