@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Calendar, Clock, Send, FileText, CheckCircle2, LayoutGrid, List, X,
-  Trash2, Save, XCircle, Globe, Settings, Plus, ToggleLeft, ToggleRight,
-  Zap, Loader2, RefreshCw, Power, ExternalLink, Timer
+  Trash2, Save, Globe, Settings, Plus, ToggleLeft, ToggleRight,
+  Zap, Loader2, RefreshCw, Power, Timer, Cpu, Terminal
 } from 'lucide-react';
 
 // ─── Type Definitions ─────────────────────────────────────────
@@ -39,6 +39,12 @@ interface AutoConfig {
 }
 
 type TabKey = 'pending' | 'scheduled' | 'sources' | 'settings';
+
+const formatDate = (dateStr: string | null | undefined, locale = 'vi-VN') => {
+  if (!dateStr) return 'UNKNOWN';
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? 'INVALID_DATE' : d.toLocaleString(locale);
+};
 
 // ─── Component ────────────────────────────────────────────────
 
@@ -270,7 +276,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
       if (data.success) {
         const scheduledAt = data.scheduledAt;
-        const formattedTime = new Date(scheduledAt).toLocaleString('vi-VN');
+        const formattedTime = formatDate(scheduledAt);
         alert(`Đã xếp vào hàng chờ! Sẽ đăng lúc: ${formattedTime}`);
         setPosts(posts.map(p => p.id === selectedPost.id ? {
           ...p,
@@ -392,52 +398,58 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
   // ─── Tab Config ─────────────────────────────────────────────
 
   const tabs: { key: TabKey; label: string; icon: React.ReactNode; count?: number }[] = [
-    { key: 'pending', label: 'Hàng đợi', icon: <List className="w-4 h-4" />, count: pendingPosts.length },
-    { key: 'scheduled', label: 'Lịch phát', icon: <LayoutGrid className="w-4 h-4" />, count: scheduledPosts.length },
-    { key: 'sources', label: 'Nguồn', icon: <Globe className="w-4 h-4" />, count: sources.length },
-    { key: 'settings', label: 'Cài đặt', icon: <Settings className="w-4 h-4" /> },
+    { key: 'pending', label: 'SYS.QUEUE', icon: <List className="w-4 h-4" />, count: pendingPosts.length },
+    { key: 'scheduled', label: 'CRON.JOBS', icon: <Terminal className="w-4 h-4" />, count: scheduledPosts.length },
+    { key: 'sources', label: 'DATA.LINKS', icon: <Globe className="w-4 h-4" />, count: sources.length },
+    { key: 'settings', label: 'CFG.CORE', icon: <Cpu className="w-4 h-4" /> },
   ];
 
   // ─── RENDER ────────────────────────────────────────────────
 
   return (
-    <main className="flex-1 flex flex-col min-w-0 bg-white/30 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] rounded-3xl overflow-hidden border border-white/50 relative">
+    <main className="flex-1 flex flex-col min-w-0 bg-zinc-950 bg-[linear-gradient(to_right,#00f3ff10_1px,transparent_1px),linear-gradient(to_bottom,#00f3ff10_1px,transparent_1px)] bg-[size:32px_32px] overflow-hidden border border-[#00f3ff]/30 relative rounded-3xl font-mono text-zinc-300">
+      
+      {/* ─── CYBERPUNK DECORATIONS ─── */}
+      <div className="absolute top-0 left-0 w-32 h-1 bg-[#00f3ff] shadow-[0_0_10px_#00f3ff]" />
+      <div className="absolute bottom-0 right-0 w-32 h-1 bg-[#ff00ff] shadow-[0_0_10px_#ff00ff]" />
+      <div className="absolute top-0 right-0 w-1 h-32 bg-[#fce205] shadow-[0_0_10px_#fce205]" />
+
       {/* Header & Tabs */}
-      <header className="flex flex-col xl:flex-row xl:items-center justify-between px-6 py-4 border-b border-white/40 shrink-0 bg-white/40 backdrop-blur-md gap-4">
+      <header className="flex flex-col xl:flex-row xl:items-center justify-between px-6 py-4 border-b border-[#00f3ff]/40 shrink-0 bg-black/60 backdrop-blur-xl gap-4 relative z-10">
         <div className="flex items-center">
-          <Calendar className="w-5 h-5 mr-3 text-blue-700" />
-          <span className="font-bold text-lg text-blue-950">CMS Content Scheduler</span>
+          <Terminal className="w-6 h-6 mr-3 text-[#00f3ff]" />
+          <span className="font-bold text-lg text-[#00f3ff] tracking-widest uppercase text-shadow-[0_0_5px_#00f3ff]">NET_SCHEDULER v2.0</span>
           {/* Auto-post status indicator */}
-          <div className={`ml-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+          <div className={`ml-4 flex items-center gap-2 px-3 py-1 text-xs font-bold uppercase tracking-wider border-l-[3px] ${
             config.autoPostOn
-              ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-              : 'bg-zinc-100 text-zinc-500 border border-zinc-200'
+              ? 'bg-[#00f3ff]/10 text-[#00f3ff] border-[#00f3ff]'
+              : 'bg-zinc-900/50 text-zinc-500 border-zinc-700'
           }`}>
-            <div className={`w-2 h-2 rounded-full ${config.autoPostOn ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`} />
-            {config.autoPostOn ? 'Auto ON' : 'Auto OFF'}
+            <div className={`w-2 h-2 rounded-none ${config.autoPostOn ? 'bg-[#00f3ff] animate-pulse shadow-[0_0_8px_#00f3ff]' : 'bg-zinc-600'}`} />
+            AUTO:{config.autoPostOn ? 'ONLINE' : 'OFFLINE'}
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 items-center flex-1 justify-center">
           {/* Tabs */}
-          <div className="flex bg-white/50 p-1 rounded-xl shadow-sm border border-white/60">
+          <div className="flex bg-black border border-zinc-800 p-1">
             {tabs.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase transition-all border-b-2 ${
                   activeTab === tab.key
-                    ? 'bg-white text-blue-700 shadow-sm'
-                    : 'text-blue-900/60 hover:text-blue-800'
+                    ? 'bg-[#00f3ff]/10 text-[#00f3ff] border-[#00f3ff] shadow-[inset_0_-4px_10px_rgba(0,243,255,0.2)]'
+                    : 'text-zinc-500 border-transparent hover:text-zinc-300'
                 }`}
               >
                 {tab.icon}
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="hidden sm:inline tracking-wider">{tab.label}</span>
                 {tab.count !== undefined && (
-                  <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-md ${
-                    activeTab === tab.key ? 'bg-blue-100 text-blue-700' : 'bg-white/50 text-blue-900/40'
+                  <span className={`ml-1 px-1.5 py-0.5 text-[10px] ${
+                    activeTab === tab.key ? 'bg-[#00f3ff] text-black' : 'bg-zinc-800 text-zinc-400'
                   }`}>
-                    {tab.count}
+                    {tab.count.toString().padStart(2, '0')}
                   </span>
                 )}
               </button>
@@ -446,65 +458,67 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
           {/* Scraper Input — only show on pending tab */}
           {activeTab === 'pending' && (
-            <div className="flex bg-white/50 p-1 rounded-xl shadow-sm border border-white/60">
+            <div className="flex bg-black/80 border border-[#ff00ff]/50 shadow-[0_0_10px_rgba(255,0,255,0.1)] focus-within:shadow-[0_0_15px_rgba(255,0,255,0.4)] transition-all">
               <input
                 type="text"
-                placeholder="Nhập URL Facebook (Post/Page)..."
+                placeholder="INPUT DATA_SOURCE_URL..."
                 value={scrapeUrl}
                 onChange={(e) => setScrapeUrl(e.target.value)}
-                className="px-4 py-2 bg-transparent text-sm font-medium outline-none text-blue-900 placeholder:text-blue-900/40 w-full sm:w-64"
+                className="px-4 py-2 bg-transparent text-sm font-medium outline-none text-[#ff00ff] placeholder:text-[#ff00ff]/30 w-full sm:w-64"
               />
               <button
                 onClick={handleScrape}
                 disabled={isScraping}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all disabled:opacity-50 flex items-center gap-2"
+                className="bg-[#ff00ff]/20 hover:bg-[#ff00ff] text-[#ff00ff] hover:text-black border-l border-[#ff00ff]/50 px-4 py-2 text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2 uppercase tracking-wider"
               >
-                {isScraping ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Cào & Xào"}
+                {isScraping ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-none animate-spin" /> : "EXECUTE"}
               </button>
             </div>
           )}
         </div>
 
-        <a href="/" className="text-sm font-medium text-blue-900/70 hover:text-blue-900 transition-colors hidden xl:block">
-          &larr; Exit
+        <a href="/" className="text-sm font-bold text-zinc-500 hover:text-[#fce205] transition-colors hidden xl:flex items-center gap-1 uppercase tracking-wider">
+          <Power className="w-4 h-4" /> Exit_Sys
         </a>
       </header>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-6 bg-transparent scrollbar-thin scrollbar-thumb-white/30">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 bg-transparent scrollbar-thin scrollbar-thumb-[#00f3ff]/30 scrollbar-track-transparent">
 
         {/* ──── TAB: PENDING ──── */}
         {activeTab === 'pending' && (
           <div className="max-w-5xl mx-auto space-y-4">
             {pendingPosts.length === 0 ? (
-              <div className="text-center py-20 text-white">
-                <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-white/50" />
-                <p className="text-lg font-medium drop-shadow-sm">Không có bài viết nào đang chờ duyệt.</p>
+              <div className="text-center py-20 text-zinc-500 border border-zinc-800 bg-black/40">
+                <Terminal className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
+                <p className="text-lg font-medium tracking-widest uppercase">SYS.QUEUE_EMPTY</p>
+                <div className="mt-2 w-32 h-1 bg-zinc-800 mx-auto" />
               </div>
             ) : (
               pendingPosts.map((post) => (
                 <div
                   key={post.id}
                   onClick={() => openModal(post)}
-                  className="bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/60 shadow-[0_4px_16px_rgba(0,0,0,0.05)] flex items-center gap-4 cursor-pointer hover:bg-white/60 hover:scale-[1.01] transition-all group"
+                  className="bg-black/60 p-5 border border-zinc-700 hover:border-[#00f3ff] hover:shadow-[0_0_15px_rgba(0,243,255,0.2)] flex items-start gap-4 cursor-pointer transition-all group relative overflow-hidden"
                 >
-                  <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center shrink-0 shadow-sm border border-white/50 group-hover:bg-blue-100 transition-colors">
-                    <FileText className="w-5 h-5 text-blue-700" />
+                  <div className="absolute top-0 left-0 w-1 h-full bg-zinc-700 group-hover:bg-[#00f3ff]" />
+                  <div className="w-10 h-10 bg-zinc-900 flex items-center justify-center shrink-0 border border-zinc-700 group-hover:border-[#00f3ff]/50 group-hover:bg-[#00f3ff]/10 transition-colors">
+                    <FileText className="w-5 h-5 text-zinc-400 group-hover:text-[#00f3ff]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="px-2.5 py-0.5 bg-white/70 text-blue-800 text-xs font-bold rounded-md border border-white/50">
-                        {post.status}
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="px-2 py-0.5 bg-[#fce205]/10 text-[#fce205] border border-[#fce205]/30 text-[10px] font-bold tracking-widest">
+                        [{post.status}]
                       </span>
-                      <span className="text-xs font-medium text-blue-900/60">Source: {post.sourcePostId}</span>
-                      <span className="text-xs font-medium text-blue-900/60">Scraped: {new Date(post.createdAt).toLocaleDateString()}</span>
+                      <span className="text-[10px] text-zinc-500 tracking-wider">SRC_ID: {post.sourcePostId}</span>
+                      <span className="text-[10px] text-zinc-500 tracking-wider">TS: {formatDate(post.createdAt)}</span>
                     </div>
-                    <h3 className="font-semibold text-blue-950 truncate text-sm">
-                      {post.originalText.substring(0, 100)}...
+                    <h3 className="text-zinc-300 font-medium text-sm leading-relaxed group-hover:text-white">
+                      {post.originalText.substring(0, 150)}...
                     </h3>
                   </div>
-                  <div className="shrink-0 pl-4 text-blue-700 font-medium text-sm group-hover:underline">
-                    Duyệt bài &rarr;
+                  <div className="shrink-0 pl-4 text-[#00f3ff] font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                    <Zap className="w-3 h-3" /> ANALYZE
                   </div>
                 </div>
               ))
@@ -514,45 +528,48 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
         {/* ──── TAB: SCHEDULED ──── */}
         {activeTab === 'scheduled' && (
-          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h2 className="font-bold text-white text-xl drop-shadow-sm flex items-center gap-2">
-                <Clock className="w-5 h-5" /> Đã Lên Lịch (Scheduled)
+          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4 relative">
+              <div className="absolute top-0 -left-4 w-1 h-full bg-[#fce205]/20 hidden lg:block" />
+              <h2 className="font-bold text-[#fce205] text-lg uppercase tracking-widest flex items-center gap-2 mb-6">
+                <Clock className="w-5 h-5" /> MEMORY.SCHEDULED
               </h2>
               {scheduledPosts.filter(p => p.status === 'SCHEDULED').length === 0 && (
-                <p className="text-white/60 text-sm">Chưa có bài nào được lên lịch.</p>
+                <p className="text-zinc-600 text-sm italic">NO_PROCESSES_FOUND</p>
               )}
               {scheduledPosts.filter(p => p.status === 'SCHEDULED').map(post => (
-                <div key={post.id} className="bg-white/60 backdrop-blur-xl p-5 rounded-2xl border border-white/80 shadow-sm">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="px-2.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-md">SCHEDULED</span>
-                    <span className="text-xs font-bold text-blue-900">{post.scheduledAt ? new Date(post.scheduledAt).toLocaleString() : ''}</span>
+                <div key={post.id} className="bg-black/60 p-5 border border-[#fce205]/30 shadow-[0_0_10px_rgba(252,226,5,0.05)] relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-full h-0.5 bg-[#fce205]" />
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="px-2 py-0.5 bg-[#fce205]/20 text-[#fce205] text-[10px] font-bold tracking-widest border border-[#fce205]/40">PENDING_EXEC</span>
+                    <span className="text-xs text-[#00f3ff] bg-[#00f3ff]/10 px-2 py-1 border border-[#00f3ff]/20">
+                      T-{post.scheduledAt ? formatDate(post.scheduledAt, 'en-GB') : 'UNKNOWN'}
+                    </span>
                   </div>
-                  <p className="text-sm text-zinc-800 font-medium line-clamp-3 mb-3">{post.rewrittenText}</p>
-                  <p className="text-xs text-blue-900/60 font-mono">FB ID: {post.fbPostId || 'auto-queue'}</p>
+                  <p className="text-sm text-zinc-300 line-clamp-3 mb-3">{post.rewrittenText}</p>
+                  <p className="text-[10px] text-zinc-600">TRG_ID: {post.fbPostId || 'AWAITING_ALLOCATION'}</p>
                 </div>
               ))}
             </div>
 
-            <div className="space-y-4">
-              <h2 className="font-bold text-white text-xl drop-shadow-sm flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5" /> Đã Đăng (Posted)
+            <div className="space-y-4 relative">
+              <div className="absolute top-0 -left-4 w-1 h-full bg-[#00f3ff]/20 hidden lg:block" />
+              <h2 className="font-bold text-[#00f3ff] text-lg uppercase tracking-widest flex items-center gap-2 mb-6">
+                <CheckCircle2 className="w-5 h-5" /> MEMORY.POSTED
               </h2>
               {scheduledPosts.filter(p => p.status === 'POSTED').length === 0 && scheduledPosts.filter(p => p.status === 'FAILED').length === 0 && (
-                <p className="text-white/60 text-sm">Chưa có bài nào được đăng.</p>
+                <p className="text-zinc-600 text-sm italic">NO_LOGS_FOUND</p>
               )}
               {scheduledPosts.filter(p => p.status === 'POSTED').map(post => (
-                <div key={post.id} className="bg-white/40 backdrop-blur-xl p-5 rounded-2xl border border-white/40 shadow-sm opacity-80">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="px-2.5 py-0.5 bg-green-100 text-green-800 text-xs font-bold rounded-md">POSTED</span>
-                  </div>
-                  <p className="text-sm text-zinc-800 font-medium line-clamp-3">{post.rewrittenText}</p>
+                <div key={post.id} className="bg-black/40 p-4 border border-[#00f3ff]/20 opacity-70">
+                  <span className="text-[10px] text-[#00f3ff] mb-2 block tracking-widest">SUCCESS_OK</span>
+                  <p className="text-xs text-zinc-400 line-clamp-2">{post.rewrittenText}</p>
                 </div>
               ))}
               {scheduledPosts.filter(p => p.status === 'FAILED').map(post => (
-                <div key={post.id} className="bg-red-50/80 backdrop-blur-xl p-5 rounded-2xl border border-red-200 shadow-sm">
-                  <span className="px-2.5 py-0.5 bg-red-100 text-red-800 text-xs font-bold rounded-md mb-2 inline-block">FAILED</span>
-                  <p className="text-sm text-red-900 font-medium line-clamp-3">{post.rewrittenText}</p>
+                <div key={post.id} className="bg-[#ff0000]/10 p-4 border border-[#ff0000]/40 shadow-[0_0_10px_rgba(255,0,0,0.1)]">
+                  <span className="text-[10px] text-[#ff0000] font-bold mb-2 block tracking-widest animate-pulse">ERR_FATAL</span>
+                  <p className="text-xs text-[#ff0000]/80 line-clamp-2">{post.rewrittenText}</p>
                 </div>
               ))}
             </div>
@@ -561,108 +578,106 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
         {/* ──── TAB: SOURCES ──── */}
         {activeTab === 'sources' && (
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-4xl mx-auto space-y-8">
             {/* Add New Source */}
-            <div className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/80 shadow-sm">
-              <h2 className="font-bold text-blue-950 text-lg mb-4 flex items-center gap-2">
-                <Plus className="w-5 h-5 text-blue-600" /> Thêm nguồn mới
+            <div className="bg-black/80 p-6 border border-[#ff00ff]/40 shadow-[0_0_15px_rgba(255,0,255,0.05)] relative">
+              <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#ff00ff]" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#ff00ff]" />
+              
+              <h2 className="font-bold text-[#ff00ff] text-sm uppercase tracking-widest mb-5 flex items-center gap-2">
+                <Plus className="w-4 h-4" /> INIT_NEW_DATA_NODE
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <input
                   type="text"
-                  placeholder="URL Facebook..."
+                  placeholder="URL..."
                   value={newSourceUrl}
                   onChange={(e) => setNewSourceUrl(e.target.value)}
-                  className="px-4 py-2.5 bg-white/70 border border-white/50 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/30 text-blue-900 placeholder:text-blue-900/40"
+                  className="px-4 py-2 bg-black border border-zinc-700 focus:border-[#ff00ff] text-sm text-zinc-200 outline-none transition-colors placeholder:text-zinc-700"
                 />
                 <input
                   type="text"
-                  placeholder="Tên hiển thị..."
+                  placeholder="IDENTIFIER..."
                   value={newSourceName}
                   onChange={(e) => setNewSourceName(e.target.value)}
-                  className="px-4 py-2.5 bg-white/70 border border-white/50 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/30 text-blue-900 placeholder:text-blue-900/40"
+                  className="px-4 py-2 bg-black border border-zinc-700 focus:border-[#ff00ff] text-sm text-zinc-200 outline-none transition-colors placeholder:text-zinc-700"
                 />
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-black border border-zinc-700 focus-within:border-[#ff00ff] px-4 py-2 transition-colors">
                   <input
                     type="number"
-                    placeholder="Interval (phút)"
                     value={newSourceInterval}
                     onChange={(e) => setNewSourceInterval(parseInt(e.target.value) || 30)}
                     min={5}
-                    className="px-4 py-2.5 bg-white/70 border border-white/50 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/30 text-blue-900 w-full"
+                    className="bg-transparent text-sm outline-none text-zinc-200 w-full"
                   />
-                  <span className="text-xs text-blue-900/60 font-medium whitespace-nowrap">phút</span>
+                  <span className="text-[10px] text-[#ff00ff] uppercase">MINS</span>
                 </div>
                 <button
                   onClick={handleAddSource}
                   disabled={isSourcesLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="bg-[#ff00ff]/20 hover:bg-[#ff00ff] text-[#ff00ff] hover:text-black border border-[#ff00ff] px-4 py-2 text-sm font-bold transition-all disabled:opacity-50 uppercase tracking-wider flex items-center justify-center gap-2"
                 >
-                  {isSourcesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  Thêm
+                  {isSourcesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "MOUNT_NODE"}
                 </button>
               </div>
             </div>
 
             {/* Sources List */}
-            <div className="space-y-3">
+            <div className="space-y-4">
+              <h3 className="text-zinc-500 text-xs uppercase tracking-widest mb-2">ACTIVE_NODES</h3>
               {sources.length === 0 ? (
-                <div className="text-center py-16 text-white">
-                  <Globe className="w-14 h-14 mx-auto mb-3 text-white/40" />
-                  <p className="text-lg font-medium drop-shadow-sm">Chưa có nguồn nào.</p>
-                  <p className="text-sm text-white/60 mt-1">Thêm URL Facebook để bắt đầu auto-scrape.</p>
+                <div className="text-center py-16 border border-zinc-800 bg-black/40 text-zinc-600 uppercase tracking-widest text-sm">
+                  NO_NODES_MOUNTED
                 </div>
               ) : (
                 sources.map((source) => (
                   <div
                     key={source.id}
-                    className={`backdrop-blur-xl p-5 rounded-2xl border shadow-sm flex items-center gap-4 transition-all ${
+                    className={`p-4 flex items-center gap-4 transition-all border-l-4 ${
                       source.isActive
-                        ? 'bg-white/60 border-white/80'
-                        : 'bg-white/20 border-white/30 opacity-60'
+                        ? 'bg-black/80 border-t border-r border-b border-zinc-800 border-l-[#00f3ff] shadow-[inset_4px_0_10px_rgba(0,243,255,0.1)]'
+                        : 'bg-black/40 border border-zinc-800 border-l-zinc-700 opacity-50'
                     }`}
                   >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm border ${
-                      source.isActive
-                        ? 'bg-emerald-100 border-emerald-200'
-                        : 'bg-zinc-100 border-zinc-200'
-                    }`}>
-                      <Globe className={`w-5 h-5 ${source.isActive ? 'text-emerald-600' : 'text-zinc-400'}`} />
-                    </div>
-
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-blue-950 text-sm">{source.name}</h3>
-                      <p className="text-xs text-blue-900/60 truncate font-mono">{source.url}</p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs text-blue-900/50">
-                          <Timer className="w-3 h-3 inline mr-1" />
-                          Mỗi {source.interval} phút
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className={`font-bold text-sm tracking-wider uppercase ${source.isActive ? 'text-[#00f3ff]' : 'text-zinc-500'}`}>
+                          {source.name}
+                        </h3>
+                        <span className="text-[10px] text-zinc-600 bg-zinc-900 px-1.5 py-0.5 border border-zinc-800">
+                          ID:0x{source.id.toString(16).padStart(4, '0').toUpperCase()}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-zinc-500 truncate mb-2">{source.url}</p>
+                      <div className="flex items-center gap-4">
+                        <span className="text-[10px] text-zinc-400 bg-black border border-zinc-800 px-2 py-0.5">
+                          FREQ: {source.interval}M
                         </span>
                         {source.lastScraped && (
-                          <span className="text-xs text-blue-900/50">
-                            Lần cuối: {new Date(source.lastScraped).toLocaleString('vi-VN')}
+                          <span className="text-[10px] text-[#fce205]/70">
+                            LST_SYNC: {formatDate(source.lastScraped)}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-3 shrink-0">
                       <button
                         onClick={() => handleToggleSource(source)}
-                        className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-                        title={source.isActive ? 'Tắt nguồn' : 'Bật nguồn'}
+                        className={`text-xs uppercase font-bold tracking-widest px-3 py-1.5 border ${
+                          source.isActive 
+                            ? 'text-black bg-[#00f3ff] border-[#00f3ff]' 
+                            : 'text-zinc-500 border-zinc-700 hover:text-white'
+                        }`}
                       >
-                        {source.isActive
-                          ? <ToggleRight className="w-6 h-6 text-emerald-600" />
-                          : <ToggleLeft className="w-6 h-6 text-zinc-400" />
-                        }
+                        {source.isActive ? 'ONLINE' : 'OFFLINE'}
                       </button>
                       <button
                         onClick={() => handleDeleteSource(source.id)}
-                        className="p-2 rounded-lg hover:bg-red-50 transition-colors"
-                        title="Xóa nguồn"
+                        className="p-1.5 border border-zinc-800 hover:border-[#ff0000] hover:bg-[#ff0000]/10 text-zinc-600 hover:text-[#ff0000] transition-colors"
+                        title="UNMOUNT"
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -674,114 +689,83 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
         {/* ──── TAB: SETTINGS ──── */}
         {activeTab === 'settings' && (
-          <div className="max-w-3xl mx-auto space-y-6">
+          <div className="max-w-4xl mx-auto space-y-8">
             {/* Scheduler Status */}
-            <div className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/80 shadow-sm">
+            <div className="bg-black/80 p-6 border border-zinc-800 relative">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-blue-950 text-lg flex items-center gap-2">
-                  <Power className="w-5 h-5 text-blue-600" /> Trạng thái Scheduler
+                <h2 className="font-bold text-zinc-300 text-sm uppercase tracking-widest flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-zinc-500" /> SYS.DAEMON_STATUS
                 </h2>
-                <button
-                  onClick={fetchConfig}
-                  disabled={isConfigLoading}
-                  className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-                  title="Refresh"
-                >
-                  <RefreshCw className={`w-4 h-4 text-blue-600 ${isConfigLoading ? 'animate-spin' : ''}`} />
+                <button onClick={fetchConfig} disabled={isConfigLoading} className="text-zinc-500 hover:text-[#00f3ff] transition-colors">
+                  <RefreshCw className={`w-4 h-4 ${isConfigLoading ? 'animate-spin' : ''}`} />
                 </button>
               </div>
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold ${
+              <div className={`inline-flex items-center gap-3 px-4 py-2 border text-xs font-bold uppercase tracking-widest ${
                 schedulerRunning
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-red-50 text-red-600 border border-red-200'
+                  ? 'bg-[#00f3ff]/10 text-[#00f3ff] border-[#00f3ff] shadow-[0_0_15px_rgba(0,243,255,0.2)]'
+                  : 'bg-[#ff0000]/10 text-[#ff0000] border-[#ff0000]'
               }`}>
-                <div className={`w-2.5 h-2.5 rounded-full ${schedulerRunning ? 'bg-emerald-500 animate-pulse' : 'bg-red-400'}`} />
-                {schedulerRunning ? 'Scheduler đang chạy' : 'Scheduler chưa chạy (Start FastAPI backend)'}
+                <div className={`w-2 h-2 rounded-none ${schedulerRunning ? 'bg-[#00f3ff] animate-pulse' : 'bg-[#ff0000]'}`} />
+                {schedulerRunning ? 'CORE_ACTIVE' : 'CORE_OFFLINE (AWAIT_UVICORN)'}
               </div>
             </div>
 
-            {/* Auto Scrape */}
-            <div className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/80 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-blue-950 text-base flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-amber-500" /> Auto Scrape
-                  </h3>
-                  <p className="text-sm text-blue-900/60 mt-1">Tự động cào bài từ các nguồn đã cấu hình, AI viết lại và đưa vào hàng đợi duyệt.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Auto Scrape */}
+              <div className="bg-black/80 p-6 border border-zinc-800 relative group hover:border-[#fce205]/50 transition-colors">
+                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#fce205] opacity-0 group-hover:opacity-100" />
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="font-bold text-[#fce205] text-sm uppercase tracking-widest mb-1">AUTO.SCRAPE_PROTOCOL</h3>
+                    <p className="text-[10px] text-zinc-500 leading-relaxed">Init cyclic data harvesting from mounted nodes. Triggers AI rewrite pipeline.</p>
+                  </div>
+                  <button onClick={() => handleToggleConfig('autoScrapeOn')} className="shrink-0 ml-4">
+                    {config.autoScrapeOn
+                      ? <ToggleRight className="w-10 h-10 text-[#fce205] drop-shadow-[0_0_8px_#fce205]" />
+                      : <ToggleLeft className="w-10 h-10 text-zinc-700" />
+                    }
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleToggleConfig('autoScrapeOn')}
-                  className="shrink-0"
-                >
-                  {config.autoScrapeOn
-                    ? <ToggleRight className="w-10 h-10 text-emerald-600" />
-                    : <ToggleLeft className="w-10 h-10 text-zinc-400" />
-                  }
-                </button>
-              </div>
-              {config.autoScrapeOn && (
-                <div className="mt-4 pt-4 border-t border-white/40">
-                  <label className="text-xs font-bold text-blue-900/60 uppercase tracking-wider">Kiểm tra nguồn mới mỗi</label>
-                  <div className="flex items-center gap-3 mt-2">
+                {config.autoScrapeOn && (
+                  <div className="mt-6 pt-4 border-t border-zinc-800/50">
+                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 block">CYCLES_DELAY_MINS</label>
                     <input
                       type="number"
                       value={config.scrapeIntervalMin}
                       onChange={(e) => handleUpdateInterval('scrapeIntervalMin', parseInt(e.target.value) || 30)}
-                      min={5}
-                      className="w-24 px-4 py-2.5 bg-white/70 border border-white/50 rounded-xl text-sm font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500/30"
+                      className="w-full bg-black border border-zinc-700 focus:border-[#fce205] text-[#fce205] px-4 py-2 outline-none text-sm"
                     />
-                    <span className="text-sm text-blue-900/60 font-medium">phút</span>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Auto Post */}
-            <div className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/80 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-blue-950 text-base flex items-center gap-2">
-                    <Send className="w-5 h-5 text-blue-600" /> Auto Post
-                  </h3>
-                  <p className="text-sm text-blue-900/60 mt-1">Tự động đăng bài đã duyệt lên Facebook khi đến giờ (status SCHEDULED + scheduledAt &le; now).</p>
-                </div>
-                <button
-                  onClick={() => handleToggleConfig('autoPostOn')}
-                  className="shrink-0"
-                >
-                  {config.autoPostOn
-                    ? <ToggleRight className="w-10 h-10 text-emerald-600" />
-                    : <ToggleLeft className="w-10 h-10 text-zinc-400" />
-                  }
-                </button>
+                )}
               </div>
-              {config.autoPostOn && (
-                <div className="mt-4 pt-4 border-t border-white/40">
-                  <label className="text-xs font-bold text-blue-900/60 uppercase tracking-wider">Khoảng cách giữa các bài auto-queue</label>
-                  <div className="flex items-center gap-3 mt-2">
+
+              {/* Auto Post */}
+              <div className="bg-black/80 p-6 border border-zinc-800 relative group hover:border-[#ff00ff]/50 transition-colors">
+                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#ff00ff] opacity-0 group-hover:opacity-100" />
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="font-bold text-[#ff00ff] text-sm uppercase tracking-widest mb-1">AUTO.PUBLISH_PROTOCOL</h3>
+                    <p className="text-[10px] text-zinc-500 leading-relaxed">Auto-commit authorized payloads to external FB_GRAPH API at scheduled ticks.</p>
+                  </div>
+                  <button onClick={() => handleToggleConfig('autoPostOn')} className="shrink-0 ml-4">
+                    {config.autoPostOn
+                      ? <ToggleRight className="w-10 h-10 text-[#ff00ff] drop-shadow-[0_0_8px_#ff00ff]" />
+                      : <ToggleLeft className="w-10 h-10 text-zinc-700" />
+                    }
+                  </button>
+                </div>
+                {config.autoPostOn && (
+                  <div className="mt-6 pt-4 border-t border-zinc-800/50">
+                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 block">QUEUE_THROTTLE_MINS</label>
                     <input
                       type="number"
                       value={config.postIntervalMin}
                       onChange={(e) => handleUpdateInterval('postIntervalMin', parseInt(e.target.value) || 120)}
-                      min={10}
-                      className="w-24 px-4 py-2.5 bg-white/70 border border-white/50 rounded-xl text-sm font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500/30"
+                      className="w-full bg-black border border-zinc-700 focus:border-[#ff00ff] text-[#ff00ff] px-4 py-2 outline-none text-sm"
                     />
-                    <span className="text-sm text-blue-900/60 font-medium">phút (giữa mỗi bài)</span>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Info */}
-            <div className="bg-blue-50/80 backdrop-blur-xl p-5 rounded-2xl border border-blue-200/60">
-              <h4 className="font-bold text-blue-800 text-sm mb-2">💡 Cách hoạt động</h4>
-              <ul className="text-sm text-blue-700 space-y-1.5 font-medium">
-                <li>1. <strong>Thêm nguồn</strong> ở tab "Nguồn" — là các trang Facebook bạn muốn cào.</li>
-                <li>2. <strong>Bật Auto Scrape</strong> — hệ thống tự cào bài, AI viết lại, đưa vào hàng đợi.</li>
-                <li>3. <strong>Duyệt bài</strong> ở tab "Hàng đợi" — sửa nội dung nếu cần.</li>
-                <li>4. Bấm <strong>"Auto Queue"</strong> để tự xếp lịch, hoặc chọn giờ thủ công.</li>
-                <li>5. <strong>Bật Auto Post</strong> — hệ thống tự đăng khi đến giờ.</li>
-              </ul>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -789,110 +773,108 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
       {/* ──── EDITOR MODAL OVERLAY ──── */}
       {selectedPost && (
-        <div className="absolute inset-0 z-50 bg-blue-950/40 backdrop-blur-sm flex items-center justify-center p-4 md:p-8">
-          <div className="bg-white/90 backdrop-blur-2xl w-full max-w-6xl h-full max-h-[800px] rounded-3xl shadow-2xl border border-white flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-white/50">
-              <h2 className="font-bold text-xl text-blue-950">Kiểm duyệt & Chỉnh sửa (Post #{selectedPost.id})</h2>
-              <button onClick={closeModal} className="p-2 hover:bg-zinc-200 rounded-full transition-colors">
-                <X className="w-5 h-5 text-zinc-500" />
+        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-black w-full max-w-5xl h-[85vh] border-2 border-[#00f3ff]/60 shadow-[0_0_30px_rgba(0,243,255,0.15)] flex flex-col relative">
+            
+            {/* Modal Decorators */}
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-[#00f3ff]" />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-[#00f3ff]" />
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 bg-[#00f3ff]/5">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#00f3ff] animate-pulse" />
+                <h2 className="font-bold text-sm tracking-widest uppercase text-[#00f3ff]">DATA.INSPECTION [0x{selectedPost.id.toString(16).toUpperCase()}]</h2>
+              </div>
+              <button onClick={closeModal} className="text-zinc-500 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-zinc-50/50">
-              {/* Cột trái: Original Text */}
-              <div className="w-full md:w-1/2 flex flex-col border-r border-zinc-200">
-                <div className="px-6 py-3 bg-zinc-100/80 border-b border-zinc-200 text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                  Nội dung gốc (English)
+            <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+              {/* Left: Original */}
+              <div className="w-full md:w-5/12 flex flex-col border-b md:border-b-0 md:border-r border-zinc-800 bg-black/50">
+                <div className="px-4 py-2 bg-zinc-900 border-b border-zinc-800 text-[10px] uppercase tracking-widest text-zinc-500 flex justify-between">
+                  <span>RAW_PAYLOAD</span>
+                  <a href={`https://facebook.com/${selectedPost.sourcePostId}`} target="_blank" rel="noreferrer" className="text-[#00f3ff] hover:underline">EXT_LINK ↗</a>
                 </div>
-                <div className="flex-1 p-6 overflow-y-auto text-sm text-zinc-700 whitespace-pre-wrap font-medium leading-relaxed">
+                <div className="flex-1 overflow-y-auto p-4 text-xs text-zinc-400 whitespace-pre-wrap leading-relaxed">
                   {selectedPost.originalText}
                 </div>
               </div>
 
-              {/* Cột phải: Rewritten Text */}
-              <div className="w-full md:w-1/2 flex flex-col bg-white">
-                <div className="px-6 py-3 bg-blue-50/80 border-b border-blue-100 text-xs font-bold text-blue-600 uppercase tracking-wider">
-                  Bản dịch AI (Vietnamese - Editable)
+              {/* Right: AI Rewritten */}
+              <div className="w-full md:w-7/12 flex flex-col bg-zinc-950">
+                <div className="px-4 py-2 bg-[#ff00ff]/10 border-b border-[#ff00ff]/30 text-[10px] uppercase tracking-widest text-[#ff00ff]">
+                  PROCESSED_PAYLOAD (EDITABLE)
                 </div>
-                <textarea
-                  value={editedText}
-                  onChange={(e) => setEditedText(e.target.value)}
-                  className="flex-1 p-6 w-full resize-none outline-none text-sm text-zinc-900 whitespace-pre-wrap font-medium leading-relaxed focus:ring-inset focus:ring-2 focus:ring-blue-500/20"
-                  placeholder="Nội dung trống..."
-                />
+                <div className="flex-1 relative">
+                  <textarea
+                    value={editedText}
+                    onChange={e => setEditedText(e.target.value)}
+                    className="absolute inset-0 w-full h-full p-6 bg-transparent text-sm text-zinc-200 outline-none resize-none leading-relaxed focus:bg-[#ff00ff]/5 transition-colors"
+                    placeholder="Input modified text data..."
+                  />
+                </div>
               </div>
             </div>
 
-            {/* CONTROLS (Dưới cùng) */}
-            <div className="bg-white border-t border-zinc-200 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Modal Actions */}
+            <div className="p-4 border-t border-zinc-800 bg-zinc-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={isLoading}
+                  className="bg-transparent border border-zinc-600 hover:border-zinc-400 text-zinc-300 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" /> COMMIT_SAVE
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isLoading}
+                  className="bg-transparent border border-[#ff0000]/50 hover:bg-[#ff0000]/20 text-[#ff0000] px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" /> PURGE
+                </button>
+              </div>
 
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 px-4 py-2.5 rounded-xl">
-                  <Clock className="w-5 h-5 text-blue-600" />
+                <div className="flex items-center bg-black border border-zinc-700 focus-within:border-[#00f3ff] px-3 py-1.5 transition-colors">
+                  <Clock className="w-4 h-4 text-zinc-500 mr-2" />
                   <input
                     type="datetime-local"
                     value={scheduleTime}
                     onChange={(e) => setScheduleTime(e.target.value)}
-                    className="bg-transparent border-none outline-none text-sm font-semibold text-zinc-800"
-                    disabled={isLoading}
+                    className="bg-transparent text-xs text-zinc-300 outline-none"
                   />
                 </div>
-                <p className="text-xs text-zinc-400 font-medium hidden lg:block max-w-[200px]">
-                  Bỏ trống giờ nếu muốn dùng Auto Queue.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button
-                  onClick={handleDelete}
-                  disabled={isLoading}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors"
-                  title="Xóa bỏ bài viết này vĩnh viễn"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Xóa bỏ</span>
-                </button>
-
-                <button
-                  onClick={handleSaveDraft}
-                  disabled={isLoading}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  <span className="hidden sm:inline">Lưu nháp</span>
-                </button>
-
-                {/* NEW: Auto Queue Button */}
-                <button
-                  onClick={handleAutoQueue}
-                  disabled={isLoading}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl transition-colors border border-amber-200"
-                  title="Tự động xếp vào slot tiếp theo"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Zap className="w-4 h-4" />
-                  )}
-                  <span className="hidden sm:inline">Auto Queue</span>
-                </button>
-
+                
                 <button
                   onClick={handleSchedulePost}
-                  disabled={isLoading || !scheduleTime}
-                  className="flex items-center justify-center gap-2 px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-transform active:scale-95 disabled:opacity-50"
+                  disabled={isLoading}
+                  className="bg-[#00f3ff]/20 border border-[#00f3ff] hover:bg-[#00f3ff] text-[#00f3ff] hover:text-black px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all shadow-[0_0_10px_rgba(0,243,255,0.2)] disabled:opacity-50"
                 >
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                  Duyệt & Hẹn giờ
+                  FORCE_SYNC
+                </button>
+                
+                <button
+                  onClick={handleAutoQueue}
+                  disabled={isLoading || !config.autoPostOn}
+                  title={!config.autoPostOn ? 'Bật Auto Post trong Cài đặt trước' : 'Tự động tính toán giờ đăng tiếp theo'}
+                  className="bg-[#ff00ff]/20 border border-[#ff00ff] hover:bg-[#ff00ff] text-[#ff00ff] hover:text-black px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all shadow-[0_0_10px_rgba(255,0,255,0.2)] disabled:opacity-50 disabled:grayscale"
+                >
+                  AUTO_ENQUEUE
                 </button>
               </div>
-
             </div>
+
+            {/* Loading Overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 text-[#00f3ff]">
+                <div className="w-12 h-12 border-4 border-transparent border-t-[#00f3ff] border-b-[#ff00ff] rounded-full animate-spin mb-4" />
+                <span className="text-xs font-bold tracking-widest uppercase">EXECUTING_ROUTINE...</span>
+              </div>
+            )}
           </div>
         </div>
       )}
