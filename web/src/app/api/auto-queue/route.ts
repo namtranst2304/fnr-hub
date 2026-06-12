@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const validation = AutoQueuePostDto.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
     }
 
     const res = await fetch(`${API_BASE}/api/auto-queue`, {
@@ -29,3 +29,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

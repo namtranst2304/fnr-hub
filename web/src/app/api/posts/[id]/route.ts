@@ -12,7 +12,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const validation = UpdatePostDto.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
     }
 
     const { rewrittenText } = validation.data;

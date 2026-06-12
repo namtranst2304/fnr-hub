@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const validation = ScheduleFbPostDto.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
     }
 
     const { postId, scheduledTime, rewrittenText } = validation.data; 
@@ -74,3 +74,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

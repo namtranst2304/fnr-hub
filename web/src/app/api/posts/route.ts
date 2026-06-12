@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const validation = CreatePostDto.safeParse(data);
     
     if (!validation.success) {
-      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
     }
 
     const { originalText, rewrittenText } = validation.data;
@@ -28,3 +28,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
