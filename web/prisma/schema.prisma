@@ -73,18 +73,49 @@ model ProcessLog {
 // ----------------------------------------------------------------------
 
 model Post {
-  id             Int       @id @default(autoincrement())
-  sourcePostId   String    @unique 
+  id             Int         @id @default(autoincrement())
+  sourcePostId   String      @unique 
   originalText   String    
-  rewrittenText  String?   // Nội dung đã được AI xào xong
+  rewrittenText  String?     // Nội dung đã được AI xào xong
   
   // Trạng thái sẽ đi từ: REWRITTEN -> SCHEDULED -> POSTED
-  status         String    @default("DRAFT") 
+  status         String      @default("DRAFT") 
   
-  // -- CÁC TRƯỜNG MỚI ĐỂ QUẢN LÝ ĐĂNG BÀI --
-  scheduledAt    DateTime? // Thời gian bạn hẹn giờ đăng
-  fbPostId       String?   // ID bài viết trên Facebook (trả về sau khi hẹn thành công)
+  // -- CÁC TRƯỜNG QUẢN LÝ ĐĂNG BÀI --
+  scheduledAt    DateTime?   // Thời gian bạn hẹn giờ đăng
+  fbPostId       String?     // ID bài viết trên Facebook (trả về sau khi hẹn thành công)
   
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  // -- LIÊN KẾT NGUỒN --
+  sourcePageId   Int?
+  sourcePage     SourcePage? @relation(fields: [sourcePageId], references: [id], onDelete: SetNull)
+  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+// ----------------------------------------------------------------------
+// AUTO-POSTING MODELS
+// ----------------------------------------------------------------------
+
+// Nguồn Facebook để auto-scrape
+model SourcePage {
+  id          Int       @id @default(autoincrement())
+  url         String    @unique   // URL page/profile FB
+  name        String               // Tên hiển thị (VD: "TechCrunch VN")
+  isActive    Boolean   @default(true) // Bật/tắt auto-scrape
+  interval    Int       @default(30)   // Scrape mỗi bao nhiêu phút
+  lastScraped DateTime?
+  posts       Post[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Cấu hình Auto Post (singleton — chỉ 1 row)
+model AutoPostConfig {
+  id              Int     @id @default(1)
+  autoScrapeOn    Boolean @default(false)
+  autoPostOn      Boolean @default(false)
+  postIntervalMin Int     @default(120)  // Đăng mỗi bao nhiêu phút
+  scrapeIntervalMin Int   @default(30)   // Cào mỗi bao nhiêu phút
+  updatedAt       DateTime @updatedAt
 }
