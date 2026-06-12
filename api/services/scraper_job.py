@@ -18,18 +18,30 @@ def rewrite_text_with_ai(original_text: str) -> str:
     if not original_text or len(original_text) < 10:
         return "Nội dung quá ngắn để xào nấu."
     
-    try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        prompt = f"""
-        Dịch và viết lại đoạn văn bản sau bằng tiếng Việt theo phong cách Gen Z mặn mòi, chèn emoji hợp lý, giữ nguyên ý chính.
-        Văn bản gốc:
-        {original_text}
-        """
-        response = model.generate_content(prompt)
-        return response.text.strip()
-    except Exception as e:
-        print(f"Lỗi AI: {e}")
-        return "Lỗi khi xào bài bằng AI: " + str(e)
+    models_to_try = ["gemini-3.5-flash", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
+    max_retries_per_model = 2
+    
+    prompt = f"""
+    Dịch và viết lại đoạn văn bản sau bằng tiếng Việt theo phong cách Gen Z mặn mòi, chèn emoji hợp lý, giữ nguyên ý chính.
+    Văn bản gốc:
+    {original_text}
+    """
+    
+    last_error = None
+    
+    for model_name in models_to_try:
+        model = genai.GenerativeModel(model_name)
+        for attempt in range(max_retries_per_model):
+            try:
+                response = model.generate_content(prompt)
+                if response and response.text:
+                    return response.text.strip()
+            except Exception as e:
+                last_error = e
+                print(f"Lỗi AI ({model_name} - Lần {attempt + 1}): {e}")
+                time.sleep(2 ** attempt) # Retry sau 1s, 2s...
+                
+    return f"Lỗi khi xào bài bằng AI sau nhiều lần thử: {last_error}"
 
 def extract_post_id(url: str) -> str:
     """Extract a unique post ID from URL for deduplication."""

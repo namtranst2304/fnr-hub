@@ -27,11 +27,11 @@ export default async function SchedulerPage() {
   }
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 text-zinc-900 font-sans">
-      <div className="w-full h-full max-w-7xl mx-auto flex flex-col p-4 md:p-6">
+    <div className="flex w-full h-screen overflow-hidden bg-black font-sans">
+      <div className="w-full h-full flex flex-col">
         {dbError && (
-          <div className="bg-orange-100/90 backdrop-blur-md text-orange-800 px-6 py-3 text-sm font-medium border border-orange-200 rounded-xl mb-4 shadow-sm">
-            Lưu ý: Không thể kết nối tới Database. Đang hiển thị dữ liệu mẫu để bạn xem trước UI. Hãy kiểm tra file .env
+          <div className="bg-[#ff0000]/10 text-[#ff0000] px-6 py-2 text-xs font-bold uppercase tracking-widest border-b border-[#ff0000]/30 shadow-sm z-50 animate-pulse">
+            SYS.WARNING: DB_CONNECTION_LOST. USING_MOCK_DATA. CHECK .ENV CONFIGURATION
           </div>
         )}
         <SchedulerArea initialPosts={posts} />
