@@ -132,7 +132,7 @@ export function SettingsTab({
       {/* AI Prompt Rules Builder */}
       <div className="bg-black/80 p-6 border border-[#00f3ff]/30 shadow-[0_0_10px_rgba(0,243,255,0.1)] relative">
         <h3 className="font-bold text-[#00f3ff] text-sm uppercase tracking-widest mb-2 flex items-center gap-2">
-          <Cpu className="w-4 h-4" /> AI_PROMPT_BUILDER (RULES)
+          <Cpu className="w-4 h-4" /> AI INSTRUCTION
         </h3>
         <p className="text-[10px] text-zinc-400 leading-relaxed mb-4">
           Set up "System Instruction" for AI when rewriting or generating new posts. You can define the tone, add mandatory hashtags, or specify emojis here.
