@@ -115,7 +115,8 @@ model AutoPostConfig {
   id              Int     @id @default(1)
   autoScrapeOn    Boolean @default(false)
   autoPostOn      Boolean @default(false)
-  postIntervalMin Int     @default(120)  // Đăng mỗi bao nhiêu phút
-  scrapeIntervalMin Int   @default(30)   // Cào mỗi bao nhiêu phút
-  updatedAt       DateTime @updatedAt
+  postIntervalMin   Int       @default(120)  // Đăng mỗi bao nhiêu phút
+  scrapeIntervalMin Int       @default(30)   // Cào mỗi bao nhiêu phút
+  aiPromptRules     String?   @db.Text       // Quy tắc sáng tác AI (Prompt Builder)
+  updatedAt         DateTime  @updatedAt
 }

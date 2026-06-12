@@ -15,6 +15,7 @@ class UpdateConfigRequest(BaseModel):
     autoPostOn: Optional[bool] = None
     postIntervalMin: Optional[int] = None
     scrapeIntervalMin: Optional[int] = None
+    aiPromptRules: Optional[str] = None
 
 
 @router.get("")

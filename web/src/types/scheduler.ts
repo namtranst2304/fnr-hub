@@ -25,9 +25,10 @@ export interface AutoConfig {
   autoPostOn: boolean;
   postIntervalMin: number;
   scrapeIntervalMin: number;
+  aiPromptRules?: string;
 }
 
-export type TabKey = 'pending' | 'scheduled' | 'sources' | 'settings';
+export type TabKey = 'pending' | 'scheduled' | 'sources' | 'settings' | 'generator';
 
 export const formatDate = (dateStr: string | null | undefined, locale = 'vi-VN') => {
   if (!dateStr) return 'UNKNOWN';

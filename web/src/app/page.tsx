@@ -1,68 +1,41 @@
-import Link from 'next/link';
-import { ArrowRight, Bot, Zap, Settings2 } from 'lucide-react';
+import { SchedulerArea } from '@/components/scheduler/SchedulerArea';
+import prisma from '@/lib/prisma';
 
-export default function HomePage() {
+export default async function SchedulerPage() {
+  let posts: any[] = [];
+  let dbError = false;
+
+  try {
+    posts = await prisma.post.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+  } catch (error) {
+    // Không dùng console.error ở đây vì Next.js Dev Overlay sẽ bắt được và hiện bảng đỏ che màn hình.
+    // Lỗi đăng nhập DB là do người dùng chưa cấu hình đúng `.env`, ta sẽ tự động fallback sang Mock Data.
+    dbError = true;
+    
+    // Provide a mock post so the UI can still be viewed and tested even if DB is down
+    posts = [
+      {
+        id: 999,
+        sourcePostId: "mock-123",
+        originalText: "This is a placeholder original text.",
+        rewrittenText: "Hé lô anh em! Bài viết này được AI xào tự động, sẵn sàng để lên lịch! 😎🔥",
+        status: "REWRITTEN"
+      }
+    ];
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans relative overflow-hidden">
-      
-      {/* Light Mesh Gradient Background */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/20 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-400/20 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] bg-pink-400/10 blur-[100px] rounded-full pointer-events-none" />
-
-      {/* Navbar Minimalist */}
-      <header className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto w-full">
-        <div className="font-bold text-lg tracking-tight flex items-center gap-2">
-          <div className="w-8 h-8 bg-white/60 backdrop-blur-md rounded-lg flex items-center justify-center text-blue-600 font-bold text-sm border border-white/50 shadow-sm">F</div>
-          FNR Hub
-        </div>
-        <div className="flex gap-4">
-          <Link 
-            href="/chat" 
-            className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors"
-          >
-            Launch Workspace
-          </Link>
-        </div>
-      </header>
-
-      {/* Hero Minimalist */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4">
-        
-        <div className="flex flex-col items-center max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-1000 ease-out">
-          <div className="px-4 py-1.5 mb-8 text-xs font-semibold border border-white/60 bg-white/40 backdrop-blur-md rounded-full text-blue-600 shadow-sm">
-            FNR Auto-Repost System v2.0
+    <div className="flex w-full h-screen overflow-hidden bg-black font-sans">
+      <div className="w-full h-full flex flex-col">
+        {dbError && (
+          <div className="bg-[#ff0000]/10 text-[#ff0000] px-6 py-2 text-xs font-bold uppercase tracking-widest border-b border-[#ff0000]/30 shadow-sm z-50 animate-pulse">
+            SYS.WARNING: DB_CONNECTION_LOST. USING_MOCK_DATA. CHECK .ENV CONFIGURATION
           </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 mb-6 drop-shadow-sm">
-            Intelligent Automation.
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">Zero Friction.</span>
-          </h1>
-          
-          <p className="text-lg text-slate-600 max-w-xl mb-10 leading-relaxed font-medium">
-            The all-in-one local AI workspace for content fetching, translating, and scheduling across social platforms.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-            <Link 
-              href="/chat" 
-              className="group flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-full font-bold transition-all hover:bg-blue-700 hover:scale-105 active:scale-95 shadow-md border border-transparent"
-            >
-              Open AI Chat
-              <ArrowRight className="w-4 h-4 text-blue-200 group-hover:text-white transition-colors" />
-            </Link>
-            
-            <Link 
-              href="/scheduler" 
-              className="group flex items-center justify-center gap-2 bg-white text-zinc-800 px-8 py-4 rounded-full font-bold transition-all hover:bg-zinc-50 hover:scale-105 active:scale-95 shadow-sm border border-zinc-200"
-            >
-              Post Scheduler
-            </Link>
-          </div>
-        </div>
-
-      </main>
+        )}
+        <SchedulerArea initialPosts={posts} />
+      </div>
     </div>
   );
 }

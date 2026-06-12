@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chat, facebook, scraper, sources, auto_config, auto_queue
+from routers import facebook, scraper, sources, auto_config, auto_queue, generator
 from services.auto_scheduler import start_scheduler, stop_scheduler
 
 
@@ -25,12 +25,12 @@ app.add_middleware(
 )
 
 # Include Routers
-app.include_router(chat.router)
 app.include_router(facebook.router)
 app.include_router(scraper.router)
 app.include_router(sources.router)
 app.include_router(auto_config.router)
 app.include_router(auto_queue.router)
+app.include_router(generator.router)
 
 
 @app.get("/api/health")

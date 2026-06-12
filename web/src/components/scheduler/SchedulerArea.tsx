@@ -11,6 +11,7 @@ import { PendingTab } from './tabs/PendingTab';
 import { ScheduledTab } from './tabs/ScheduledTab';
 import { SourcesTab } from './tabs/SourcesTab';
 import { SettingsTab } from './tabs/SettingsTab';
+import { GeneratorTab } from './tabs/GeneratorTab';
 import { EditorModal } from './modal/EditorModal';
 
 // ─── Component ────────────────────────────────────────────────
@@ -60,7 +61,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
     handleSaveDraft,
     handleDelete,
     handleSchedulePost,
-    handleAutoQueue
+    handleAutoQueue,
+    handleSaveCustomPost
   } = useScheduler(initialPosts);
 
 
@@ -123,12 +125,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
             )})}
           </div>
 
-
         </div>
-
-        <a href="/" className="text-sm font-bold text-zinc-500 hover:text-[#fce205] transition-colors duration-300 ease-out hidden xl:flex items-center gap-1 uppercase tracking-wider">
-          <Power className="w-4 h-4" /> Exit_Sys
-        </a>
       </header>
 
       {/* Scrollable Content Area */}
@@ -175,6 +172,11 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
                 handleToggleSource={handleToggleSource}
                 handleDeleteSource={handleDeleteSource}
               />
+            )}
+
+            {/* ──── TAB: GENERATOR ──── */}
+            {activeTab === 'generator' && (
+              <GeneratorTab onSaveToPending={handleSaveCustomPost} />
             )}
 
             {/* ──── TAB: SETTINGS ──── */}

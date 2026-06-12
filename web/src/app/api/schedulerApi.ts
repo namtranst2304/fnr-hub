@@ -40,6 +40,19 @@ export const schedulerApi = {
     return res.json();
   },
 
+  generateCustomPost: async (prompt: string, imageBase64?: string): Promise<{ success: boolean; content?: string; error?: string; model_used?: string }> => {
+    const res = await fetch(`${API_ROUTES.BASE_URL}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, image_base64: imageBase64 }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to generate post');
+    }
+    return res.json();
+  },
+
   triggerScraper: async (url: string) => {
     const res = await fetch(API_ROUTES.TRIGGER_SCRAPER, {
       method: 'POST',
@@ -49,6 +62,18 @@ export const schedulerApi = {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.detail || data.error || 'Lỗi server scraper');
+    }
+    return res.json();
+  },
+
+  createPost: async (originalText: string, rewrittenText: string) => {
+    const res = await fetch(API_ROUTES.POSTS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ originalText, rewrittenText }),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to create post');
     }
     return res.json();
   },

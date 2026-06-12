@@ -4,7 +4,6 @@ import psycopg2
 import google.generativeai as genai
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
 import time
 import random
 
@@ -12,6 +11,8 @@ load_dotenv()
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
+
+from services.db import get_auto_config
 
 def rewrite_text_with_ai(original_text: str) -> str:
     """Uses Google Gemini to rewrite the text."""
@@ -21,19 +22,20 @@ def rewrite_text_with_ai(original_text: str) -> str:
     models_to_try = ["gemini-3.5-flash", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-1.5-pro"]
     max_retries_per_model = 2
     
-    prompt = f"""
-    Dịch và viết lại đoạn văn bản sau bằng tiếng Việt theo phong cách Gen Z mặn mòi, chèn emoji hợp lý, giữ nguyên ý chính.
-    Văn bản gốc:
-    {original_text}
-    """
+    config = get_auto_config()
+    system_instruction = config.get("aiPromptRules", "")
     
     last_error = None
     
     for model_name in models_to_try:
-        model = genai.GenerativeModel(model_name)
+        if system_instruction:
+            model = genai.GenerativeModel(model_name, system_instruction=system_instruction)
+        else:
+            model = genai.GenerativeModel(model_name)
+        
         for attempt in range(max_retries_per_model):
             try:
-                response = model.generate_content(prompt)
+                response = model.generate_content(f"Văn bản gốc:\n{original_text}")
                 if response and response.text:
                     return response.text.strip()
             except Exception as e:
@@ -57,14 +59,13 @@ def scrape_with_playwright(url: str) -> str:
     
     with sync_playwright() as p:
         # headless=True for automated background run
-        browser = p.chromium.launch_persistent_context(
+        context = p.chromium.launch_persistent_context(
             user_data_dir=session_dir,
             headless=True,
             args=["--disable-blink-features=AutomationControlled"]
         )
         
-        page = browser.new_page()
-        stealth_sync(page)
+        page = context.new_page()
         
         # Add a random delay to act human
         time.sleep(random.uniform(1, 3))

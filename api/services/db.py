@@ -12,6 +12,8 @@ from typing import Optional
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
+if "?schema=" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.split("?schema=")[0]
 
 
 @contextmanager
@@ -117,10 +119,12 @@ def get_auto_config() -> dict:
             if row:
                 return dict(row)
             # Create default row
+            default_prompt = "Dịch và viết lại đoạn văn bản sau bằng tiếng Việt theo phong cách Gen Z mặn mòi, chèn emoji hợp lý, giữ nguyên ý chính."
             cur.execute(
-                '''INSERT INTO "AutoPostConfig" (id, "autoScrapeOn", "autoPostOn", "postIntervalMin", "scrapeIntervalMin", "updatedAt")
-                   VALUES (1, FALSE, FALSE, 120, 30, NOW())
-                   RETURNING *'''
+                '''INSERT INTO "AutoPostConfig" (id, "autoScrapeOn", "autoPostOn", "postIntervalMin", "scrapeIntervalMin", "aiPromptRules", "updatedAt")
+                   VALUES (1, FALSE, FALSE, 120, 30, %s, NOW())
+                   RETURNING *''',
+                (default_prompt,)
             )
             conn.commit()
             return dict(cur.fetchone())
@@ -130,7 +134,7 @@ def update_auto_config(data: dict) -> dict:
     """Update the singleton AutoPostConfig."""
     set_clauses = []
     values = []
-    for key in ("autoScrapeOn", "autoPostOn", "postIntervalMin", "scrapeIntervalMin"):
+    for key in ("autoScrapeOn", "autoPostOn", "postIntervalMin", "scrapeIntervalMin", "aiPromptRules"):
         if key in data:
             set_clauses.append(f'"{key}" = %s')
             values.append(data[key])

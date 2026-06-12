@@ -1,4 +1,6 @@
-import { Cpu, RefreshCw, ToggleRight, ToggleLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Cpu, RefreshCw, ToggleRight, ToggleLeft, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { AutoConfig } from '@/types/scheduler';
 
 interface SettingsTabProps {
@@ -7,7 +9,7 @@ interface SettingsTabProps {
   isConfigLoading: boolean;
   fetchConfig: () => void;
   handleToggleConfig: (key: keyof AutoConfig) => void;
-  handleUpdateInterval: (key: 'postIntervalMin' | 'scrapeIntervalMin', value: number) => void;
+  handleUpdateInterval: (key: 'postIntervalMin' | 'scrapeIntervalMin' | 'aiPromptRules', value: number | string) => void;
 }
 
 export function SettingsTab({
@@ -18,6 +20,20 @@ export function SettingsTab({
   handleToggleConfig,
   handleUpdateInterval
 }: SettingsTabProps) {
+
+  const [localPrompt, setLocalPrompt] = useState(config.aiPromptRules || '');
+  const [isSavingPrompt, setIsSavingPrompt] = useState(false);
+
+  useEffect(() => {
+    setLocalPrompt(config.aiPromptRules || '');
+  }, [config.aiPromptRules]);
+
+  const handleSavePrompt = async () => {
+    setIsSavingPrompt(true);
+    await handleUpdateInterval('aiPromptRules', localPrompt);
+    setIsSavingPrompt(false);
+    toast.success('Đã lưu quy tắc AI!');
+  };
 
   // Helper component to avoid duplication
   const ConfigCard = ({
@@ -111,6 +127,33 @@ export function SettingsTab({
           intervalKey="postIntervalMin"
           intervalLabel="QUEUE_THROTTLE_MINS"
         />
+      </div>
+
+      {/* AI Prompt Rules Builder */}
+      <div className="bg-black/80 p-6 border border-[#00f3ff]/30 shadow-[0_0_10px_rgba(0,243,255,0.1)] relative">
+        <h3 className="font-bold text-[#00f3ff] text-sm uppercase tracking-widest mb-2 flex items-center gap-2">
+          <Cpu className="w-4 h-4" /> AI_PROMPT_BUILDER (RULES)
+        </h3>
+        <p className="text-[10px] text-zinc-400 leading-relaxed mb-4">
+          Thiết lập quy tắc ("System Instruction") cho AI khi xào bài tự động hoặc tạo bài mới. Bạn có thể quy định giọng văn, thêm hashtag, emoji bắt buộc ở đây.
+        </p>
+        <textarea
+          value={localPrompt}
+          onChange={(e) => setLocalPrompt(e.target.value)}
+          placeholder="VD: Dịch và viết lại đoạn văn bản sau bằng tiếng Việt theo phong cách Gen Z mặn mòi..."
+          className="w-full bg-black border border-[#00f3ff]/50 focus:border-[#00f3ff] text-[#00f3ff] p-4 outline-none text-sm font-mono min-h-[120px] transition-colors shadow-[inset_0_0_10px_rgba(0,243,255,0.05)]"
+        />
+        <div className="flex justify-between items-center mt-4">
+          <span className="text-[10px] text-[#00f3ff]/70 italic">* Vui lòng ấn LƯU sau khi chỉnh sửa</span>
+          <button
+            onClick={handleSavePrompt}
+            disabled={isSavingPrompt || localPrompt === config.aiPromptRules}
+            className="flex items-center gap-2 px-6 py-2 bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff] hover:bg-[#00f3ff]/40 hover:shadow-[0_0_15px_rgba(0,243,255,0.4)] transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingPrompt ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {isSavingPrompt ? 'ĐANG LƯU...' : 'LƯU QUY TẮC'}
+          </button>
+        </div>
       </div>
     </div>
   );

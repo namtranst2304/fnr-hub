@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { Post, SourcePage, AutoConfig, TabKey } from '../types/scheduler';
 import { schedulerApi } from '@/app/api/schedulerApi';
 
@@ -112,11 +113,11 @@ export function useScheduler(initialPosts: Post[]) {
     setIsScraping(true);
     try {
       await schedulerApi.triggerScraper(scrapeUrl);
-      alert("Cào thành công! Vui lòng Refresh (F5) trang để xem bài viết mới trong Hàng đợi.");
+      toast.success("Cào thành công! Vui lòng Refresh (F5) trang để xem bài viết mới trong Hàng đợi.");
       setScrapeUrl('');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      alert("Không thể kết nối tới Python Backend: " + message);
+      toast.error("Không thể kết nối tới Python Backend: " + message);
     } finally {
       setIsScraping(false);
     }
@@ -129,13 +130,14 @@ export function useScheduler(initialPosts: Post[]) {
       const data = await schedulerApi.updatePost(selectedPost.id, editedText);
       if (data.success) {
         setPosts(posts.map(p => p.id === selectedPost.id ? { ...p, rewrittenText: editedText } : p));
+        toast.success("Đã lưu chỉnh sửa bản nháp!");
         closeModal();
       } else {
-        alert("Lỗi: " + data.error);
+        toast.error("Lỗi: " + data.error);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      alert("Lỗi Server: " + message);
+      toast.error("Lỗi Server: " + message);
     } finally {
       setIsLoading(false);
     }
@@ -150,13 +152,14 @@ export function useScheduler(initialPosts: Post[]) {
       const data = await schedulerApi.deletePost(selectedPost.id);
       if (data.success) {
         setPosts(posts.filter(p => p.id !== selectedPost.id));
+        toast.success("Đã xóa bài viết khỏi hàng đợi!");
         closeModal();
       } else {
-        alert("Lỗi: " + data.error);
+        toast.error("Lỗi: " + data.error);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      alert("Lỗi Server: " + message);
+      toast.error("Lỗi Server: " + message);
     } finally {
       setIsLoading(false);
     }
@@ -165,7 +168,7 @@ export function useScheduler(initialPosts: Post[]) {
   const handleSchedulePost = async () => {
     if (!selectedPost) return;
     if (!scheduleTime) {
-      alert("Vui lòng chọn ngày giờ hẹn!");
+      toast.error("Vui lòng chọn ngày giờ hẹn!");
       return;
     }
 
@@ -174,7 +177,7 @@ export function useScheduler(initialPosts: Post[]) {
       const data = await schedulerApi.scheduleFbPost(selectedPost.id, new Date(scheduleTime).toISOString(), editedText);
 
       if (data.success) {
-        alert(`Đã ném lên Facebook! Chờ đến giờ là nổ. ID: ${data.fbPostId}`);
+        toast.success(`Đã ném lên Facebook! Chờ đến giờ là nổ. ID: ${data.fbPostId}`);
         setPosts(posts.map(p => p.id === selectedPost.id ? {
           ...p,
           status: 'SCHEDULED',
@@ -184,11 +187,11 @@ export function useScheduler(initialPosts: Post[]) {
         } : p));
         closeModal();
       } else {
-        alert(`Lỗi rùi: ${data.error}`);
+        toast.error(`Lỗi rùi: ${data.error}`);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      alert(`Lỗi Server: ${message}`);
+      toast.error(`Lỗi Server: ${message}`);
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +207,7 @@ export function useScheduler(initialPosts: Post[]) {
       if (data.success) {
         const scheduledAt = data.scheduledAt;
         const formattedTime = new Date(scheduledAt).toLocaleString('vi-VN');
-        alert(`Đã xếp vào hàng chờ! Sẽ đăng lúc: ${formattedTime}`);
+        toast.success(`Đã xếp vào hàng chờ! Sẽ đăng lúc: ${formattedTime}`);
         setPosts(posts.map(p => p.id === selectedPost.id ? {
           ...p,
           status: 'SCHEDULED',
@@ -213,11 +216,11 @@ export function useScheduler(initialPosts: Post[]) {
         } : p));
         closeModal();
       } else {
-        alert(`Lỗi: ${data.error || data.detail}`);
+        toast.error(`Lỗi: ${data.error || data.detail}`);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      alert(`Lỗi Server: ${message}`);
+      toast.error(`Lỗi Server: ${message}`);
     } finally {
       setIsLoading(false);
     }
@@ -227,7 +230,7 @@ export function useScheduler(initialPosts: Post[]) {
 
   const handleAddSource = async () => {
     if (!newSourceUrl || !newSourceName) {
-      alert("Vui lòng nhập URL và tên nguồn!");
+      toast.error("Vui lòng nhập URL và tên nguồn!");
       return;
     }
     setIsSourcesLoading(true);
@@ -238,12 +241,13 @@ export function useScheduler(initialPosts: Post[]) {
         setNewSourceUrl('');
         setNewSourceName('');
         setNewSourceInterval(30);
+        toast.success("Đã thêm nguồn mới!");
       } else {
-        alert("Lỗi: " + (data.detail || data.error));
+        toast.error("Lỗi: " + (data.detail || data.error));
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      alert("Lỗi: " + message);
+      toast.error("Lỗi: " + message);
     } finally {
       setIsSourcesLoading(false);
     }
@@ -254,9 +258,23 @@ export function useScheduler(initialPosts: Post[]) {
       const data = await schedulerApi.toggleSource(source.id, !source.isActive);
       if (data.success) {
         setSources(sources.map(s => s.id === source.id ? { ...s, isActive: !s.isActive } : s));
+        toast.success(`Nguồn ${source.name} đã ${!source.isActive ? 'BẬT' : 'TẮT'}`);
       }
     } catch (err) {
       console.error('Toggle source failed:', err);
+      toast.error('Lỗi khi bật/tắt nguồn');
+    }
+  };
+
+  const handleSaveCustomPost = async (originalText: string, rewrittenText: string) => {
+    try {
+      const data = await schedulerApi.createPost(originalText, rewrittenText);
+      if (data.success && data.post) {
+        setPosts(prev => [data.post, ...prev]);
+        toast.success('Đã lưu bài viết vào hàng đợi Pending!');
+      }
+    } catch (err: any) {
+      toast.error('Lỗi khi lưu bài viết: ' + err.message);
     }
   };
 
@@ -266,9 +284,11 @@ export function useScheduler(initialPosts: Post[]) {
       const data = await schedulerApi.deleteSource(sourceId);
       if (data.success) {
         setSources(sources.filter(s => s.id !== sourceId));
+        toast.success("Đã xóa nguồn!");
       }
     } catch (err) {
       console.error('Delete source failed:', err);
+      toast.error("Lỗi khi xóa nguồn");
     }
   };
 
@@ -282,19 +302,23 @@ export function useScheduler(initialPosts: Post[]) {
       if (data.success) {
         setConfig(data.config);
         setSchedulerRunning(data.scheduler?.running ?? false);
+        toast.success(`Đã cập nhật cấu hình: ${key}`);
       }
     } catch (err) {
       console.error('Toggle config failed:', err);
+      toast.error('Lỗi cập nhật cấu hình');
       setConfig({ ...config, [key]: !newValue }); // Revert
     }
   };
 
-  const handleUpdateInterval = async (key: 'postIntervalMin' | 'scrapeIntervalMin', value: number) => {
+  const handleUpdateInterval = async (key: 'postIntervalMin' | 'scrapeIntervalMin' | 'aiPromptRules', value: number | string) => {
     setConfig({ ...config, [key]: value });
     try {
       await schedulerApi.updateConfig({ [key]: value });
+      toast.success(`Đã cập nhật ${key}`);
     } catch (err) {
       console.error('Update interval failed:', err);
+      toast.error(`Lỗi cập nhật ${key}`);
     }
   };
 
@@ -340,6 +364,7 @@ export function useScheduler(initialPosts: Post[]) {
     scheduledPosts,
     
     handleSaveDraft,
+    handleSaveCustomPost,
     handleDelete,
     handleSchedulePost,
     handleAutoQueue
