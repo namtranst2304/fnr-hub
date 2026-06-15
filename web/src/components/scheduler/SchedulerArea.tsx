@@ -62,7 +62,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
     handleSchedulePost,
     handleAutoQueue,
     handleSendToAI,
-    handlePushToScheduleDirect
+    handlePushToScheduleDirect,
+    handleCreateCustomPost
   } = useScheduler(initialPosts);
 
 
@@ -166,6 +167,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
                     closeModal();
                   }
                 }}
+                handleCreateCustomPost={handleCreateCustomPost}
                 editedText={editedText}
                 setEditedText={setEditedText}
                 scheduleTime={scheduleTime}

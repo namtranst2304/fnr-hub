@@ -9,8 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface EditorTabProps {
   posts: Post[];
-  selectedPost: Post | null;
   setSelectedPost: (post: Post | null) => void;
+  handleCreateCustomPost: (originalText: string) => Promise<void>;
   editedText: string;
   setEditedText: (val: string) => void;
   scheduleTime: string;
@@ -25,6 +25,7 @@ export function EditorTab({
   posts,
   selectedPost,
   setSelectedPost,
+  handleCreateCustomPost,
   editedText,
   setEditedText,
   scheduleTime,
@@ -37,6 +38,8 @@ export function EditorTab({
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [customIdea, setCustomIdea] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   const draftPosts = posts.filter(p => p.status === 'DRAFT');
 
@@ -84,13 +87,46 @@ export function EditorTab({
     }, 3000);
   };
 
+  const handleCreateNew = async () => {
+    if (!customIdea.trim()) return;
+    setIsCreating(true);
+    await handleCreateCustomPost(customIdea);
+    setCustomIdea('');
+    setIsCreating(false);
+  };
+
   // View: List of Drafts
   if (!selectedPost) {
     return (
-      <div className="max-w-5xl mx-auto space-y-4">
-        <h2 className="text-[#00f3ff] font-bold tracking-widest uppercase mb-4 flex items-center gap-2">
-          <Bot className="w-5 h-5" /> AI WORKSPACE - PENDING DRAFTS
-        </h2>
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Custom Post Creator */}
+        <div className="bg-black/60 border border-[#00f3ff]/30 p-6 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-[#00f3ff]/50" />
+          <h2 className="text-[#00f3ff] font-bold text-sm tracking-widest uppercase mb-4 flex items-center gap-2">
+            <Bot className="w-4 h-4" /> INJECT_CUSTOM_DATA
+          </h2>
+          <div className="flex gap-4">
+            <textarea
+              value={customIdea}
+              onChange={(e) => setCustomIdea(e.target.value)}
+              placeholder="Enter your rough idea or content here..."
+              className="flex-1 bg-zinc-900/50 border border-zinc-700 p-3 text-sm text-zinc-300 outline-none focus:border-[#00f3ff] resize-none h-24 transition-colors"
+            />
+            <button
+              onClick={handleCreateNew}
+              disabled={isCreating || !customIdea.trim()}
+              className="bg-[#00f3ff]/20 hover:bg-[#00f3ff] text-[#00f3ff] hover:text-black border border-[#00f3ff] px-6 font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+            >
+              {isCreating ? <Loader2 className="w-5 h-5 animate-spin" /> : "CREATE"}
+            </button>
+          </div>
+        </div>
+
+        {/* Draft List */}
+        <div>
+          <h2 className="text-[#00f3ff] font-bold tracking-widest uppercase mb-4 flex items-center gap-2">
+            <Terminal className="w-5 h-5" /> AI WORKSPACE - PENDING DRAFTS
+          </h2>
         {draftPosts.length === 0 ? (
           <div className="text-center py-20 text-zinc-500 border border-zinc-800 bg-black/40">
             <Terminal className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
@@ -116,6 +152,7 @@ export function EditorTab({
             </div>
           ))
         )}
+        </div>
       </div>
     );
   }
@@ -245,7 +282,7 @@ export function EditorTab({
               type="datetime-local"
               value={scheduleTime}
               onChange={(e) => setScheduleTime(e.target.value)}
-              className="bg-transparent text-xs text-zinc-300 outline-none"
+              className="bg-transparent text-xs text-zinc-300 outline-none [color-scheme:dark] cursor-pointer"
             />
           </div>
           

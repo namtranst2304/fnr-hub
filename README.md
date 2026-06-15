@@ -12,39 +12,45 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## 🛠️ Getting Started
-
-### 1. Configure Environment Variables
-Copy the `.env.example` file and rename it to `.env`. Make sure to place a copy inside the `web/` folder if Next.js requires specific variables.
-```bash
-cp .env.example web/.env
-```
-
-### 2. Download AI Model
-Make sure Ollama is installed and running in the background. Download the required model (e.g., Llama 3) by running this in your terminal:
-```bash
-ollama run llama3
-```
-
----
-
-## 💻 Running the Project (Manual Setup)
+## 🛠️ Getting Started (Manual Setup)
 
 You will need two separate terminal windows for development.
 
-### Backend (FastAPI)
+### 1. Database Setup
+Ensure you have a PostgreSQL database running. Create a database for the project.
+
+### 2. Configure Environment Variables
+You need `.env` files in both `api/` and `web/` directories.
+
+**Backend (`api/.env`):**
+```ini
+DATABASE_URL=postgresql://user:password@localhost:5432/fnr_hub
+# Thêm các biến liên quan đến AI (Ollama URL, Gemini API Key, etc.)
+```
+
+**Frontend (`web/.env.local`):**
+```ini
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### 3. Running Backend (FastAPI)
+Mở Terminal 1:
 ```bash
 cd api
+python -m venv venv
+.\venv\Scripts\activate  # (Windows)
+# source venv/bin/activate # (Mac/Linux)
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+python -m uvicorn main:app --reload --port 8000
 ```
 *The API will run on `http://localhost:8000`*
 
-### Frontend (Next.js)
+### 4. Running Frontend (Next.js)
+Mở Terminal 2:
 ```bash
 cd web
-yarn install
-yarn dev
+npm install
+npm run dev
 ```
 *The UI will run on `http://localhost:3000`*
 

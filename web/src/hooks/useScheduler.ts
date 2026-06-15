@@ -309,16 +309,18 @@ export function useScheduler(initialPosts: Post[]) {
     }
   };
 
-  const handleSaveCustomPost = async (originalText: string, rewrittenText: string) => {
+  const handleCreateCustomPost = async (originalText: string) => {
     try {
-      const data = await schedulerApi.createPost(originalText, rewrittenText);
+      const data = await schedulerApi.createPost(originalText, "");
       if (data.success && data.post) {
         setPosts(prev => [data.post, ...prev]);
-        toast.success('Post saved to Pending queue!');
+        setSelectedPost(data.post);
+        setEditedText("");
+        toast.success('Custom Post Draft Created!');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      toast.error('Failed to save post: ' + message);
+      toast.error('Failed to create custom post: ' + message);
     }
   };
 
@@ -409,7 +411,7 @@ export function useScheduler(initialPosts: Post[]) {
     scheduledPosts,
     
     handleSaveDraft,
-    handleSaveCustomPost,
+    handleCreateCustomPost,
     handleDelete,
     handleSchedulePost,
     handleAutoQueue,
