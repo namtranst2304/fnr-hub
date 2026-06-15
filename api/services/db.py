@@ -174,6 +174,36 @@ def get_posts_ready_to_publish() -> list[dict]:
             return [dict(row) for row in cur.fetchall()]
 
 
+def get_post_by_id(post_id: int) -> Optional[dict]:
+    """Get a single post by ID."""
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute('SELECT * FROM "Post" WHERE id = %s', (post_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+
+def update_post_schedule(post_id: int, rewritten_text: Optional[str], scheduled_at: str, status: str, fb_post_id: str):
+    """Update post details after scheduling it to Facebook."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            if rewritten_text is not None:
+                cur.execute(
+                    '''UPDATE "Post" 
+                       SET "rewrittenText" = %s, "scheduledAt" = %s, status = %s, "fbPostId" = %s, "updatedAt" = NOW() 
+                       WHERE id = %s''',
+                    (rewritten_text, scheduled_at, status, fb_post_id, post_id)
+                )
+            else:
+                cur.execute(
+                    '''UPDATE "Post" 
+                       SET "scheduledAt" = %s, status = %s, "fbPostId" = %s, "updatedAt" = NOW() 
+                       WHERE id = %s''',
+                    (scheduled_at, status, fb_post_id, post_id)
+                )
+            conn.commit()
+
+
 def update_post_status(post_id: int, status: str, fb_post_id: Optional[str] = None):
     """Update a post's status (and optionally fbPostId)."""
     with get_connection() as conn:

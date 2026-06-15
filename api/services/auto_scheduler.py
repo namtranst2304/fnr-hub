@@ -101,7 +101,7 @@ def auto_post_job():
     so FB handles the timing. This job is for posts scheduled via "Auto Queue"
     where we want to control timing ourselves (published=true, post immediately).
     """
-    import httpx
+
     from services.db import get_auto_config, get_posts_ready_to_publish, update_post_status
 
     try:
@@ -113,12 +113,9 @@ def auto_post_job():
         if not posts:
             return
 
-        page_id = os.getenv("FACEBOOK_PAGE_ID", "")
-        access_token = os.getenv("FACEBOOK_ACCESS_TOKEN", "")
 
-        if not page_id or not access_token:
-            logger.error("[Auto Post] FACEBOOK_PAGE_ID or FACEBOOK_ACCESS_TOKEN not set!")
-            return
+
+        from services.facebook_service import publish_post_immediately
 
         for post in posts:
             try:
@@ -129,17 +126,8 @@ def auto_post_job():
 
                 logger.info(f"[Auto Post] Publishing post #{post['id']}...")
 
-                # Post immediately to Facebook
-                response = httpx.post(
-                    f"https://graph.facebook.com/v19.0/{page_id}/feed",
-                    data={
-                        "message": text_to_post,
-                        "published": "true",
-                        "access_token": access_token
-                    },
-                    timeout=30.0
-                )
-                result = response.json()
+                # Post immediately to Facebook using shared service
+                result = publish_post_immediately(text_to_post)
 
                 if "id" in result:
                     update_post_status(post["id"], "POSTED", fb_post_id=result["id"])
