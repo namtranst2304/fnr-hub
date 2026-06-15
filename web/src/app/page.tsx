@@ -1,14 +1,14 @@
 import { SchedulerArea } from '@/components/scheduler/SchedulerArea';
-import prisma from '@/lib/prisma';
 
 export default async function SchedulerPage() {
   let posts: any[] = [];
   let dbError = false;
 
   try {
-    posts = await prisma.post.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
+    const res = await fetch('http://localhost:8000/api/v1/posts', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch posts');
+    const data = await res.json();
+    posts = data.posts || [];
   } catch (error) {
     // Not using console.error here because Next.js Dev Overlay will catch it and show a red screen.
     // DB login error is due to user not configuring .env properly, automatically fallback to Mock Data.

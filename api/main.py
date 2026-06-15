@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import facebook, scraper, sources, auto_config, auto_queue, generator
+from routers import facebook, scraper, sources, auto_config, auto_queue, generator, posts
 from services.auto_scheduler import start_scheduler, stop_scheduler
 
 
@@ -26,6 +26,7 @@ app.add_middleware(
 
 # Include Routers
 app.include_router(facebook.router)
+app.include_router(posts.router)
 app.include_router(scraper.router)
 app.include_router(sources.router)
 app.include_router(auto_config.router)

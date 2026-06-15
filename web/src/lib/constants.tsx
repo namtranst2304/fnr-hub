@@ -3,12 +3,12 @@ import { TabKey } from '../types/scheduler';
 
 export const API_ROUTES = {
   BASE_URL: 'http://localhost:8000',
-  SOURCES: '/api/sources',
-  AUTO_CONFIG: '/api/auto-config',
+  SOURCES: 'http://localhost:8000/api/sources',
+  AUTO_CONFIG: 'http://localhost:8000/api/auto-config',
   TRIGGER_SCRAPER: 'http://localhost:8000/api/trigger-scraper',
-  POSTS: '/api/posts',
-  SCHEDULE_FB: '/api/schedule-fb',
-  AUTO_QUEUE: '/api/auto-queue',
+  POSTS: 'http://localhost:8000/api/v1/posts',
+  SCHEDULE_FB: 'http://localhost:8000/api/v1/facebook/schedule',
+  AUTO_QUEUE: 'http://localhost:8000/api/auto-queue',
 };
 
 export const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [

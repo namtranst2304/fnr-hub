@@ -160,6 +160,14 @@ def update_auto_config(data: dict) -> dict:
 # Post helpers
 # ──────────────────────────────────────────────
 
+def get_all_posts() -> list[dict]:
+    """Get all posts ordered by creation date descending."""
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute('SELECT * FROM "Post" ORDER BY "createdAt" DESC')
+            return [dict(row) for row in cur.fetchall()]
+
+
 def get_posts_ready_to_publish() -> list[dict]:
     """Get posts with status SCHEDULED and scheduledAt <= now."""
     with get_connection() as conn:
@@ -244,6 +252,36 @@ def insert_scraped_post(
             conn.commit()
             row = cur.fetchone()
             return row[0] if row else None
+
+
+def create_custom_post(original_text: str, rewritten_text: str) -> dict:
+    """Create a new custom post from the UI."""
+    import time
+    import random
+    source_post_id = f"custom_gen_{int(time.time() * 1000)}_{random.randint(0, 999)}"
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                '''INSERT INTO "Post" ("sourcePostId", "originalText", "rewrittenText", "status", "createdAt", "updatedAt")
+                   VALUES (%s, %s, %s, 'REWRITTEN', NOW(), NOW())
+                   RETURNING *''',
+                (source_post_id, original_text, rewritten_text)
+            )
+            conn.commit()
+            return dict(cur.fetchone())
+
+
+def update_post_rewritten_text(post_id: int, rewritten_text: str) -> dict:
+    """Update a post's rewritten text."""
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                '''UPDATE "Post" SET "rewrittenText" = %s, "updatedAt" = NOW()
+                   WHERE id = %s RETURNING *''',
+                (rewritten_text, post_id)
+            )
+            conn.commit()
+            return dict(cur.fetchone())
 
 
 def get_next_auto_schedule_time() -> str:
