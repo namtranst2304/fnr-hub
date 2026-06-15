@@ -8,7 +8,7 @@ export function useScheduler(initialPosts: Post[]) {
   const [direction, setDirection] = useState(0);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
 
-  const tabKeys: TabKey[] = ['pending', 'scheduled', 'sources', 'settings'];
+  const tabKeys: TabKey[] = ['pending', 'scheduled', 'sources', 'generator', 'settings'];
   const changeTab = (newTab: TabKey) => {
     const oldIndex = tabKeys.indexOf(activeTab);
     const newIndex = tabKeys.indexOf(newTab);
@@ -273,8 +273,9 @@ export function useScheduler(initialPosts: Post[]) {
         setPosts(prev => [data.post, ...prev]);
         toast.success('Post saved to Pending queue!');
       }
-    } catch (err: any) {
-      toast.error('Failed to save post: ' + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error('Failed to save post: ' + message);
     }
   };
 

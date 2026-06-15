@@ -29,9 +29,3 @@ export interface AutoConfig {
 }
 
 export type TabKey = 'pending' | 'scheduled' | 'sources' | 'settings' | 'generator';
-
-export const formatDate = (dateStr: string | null | undefined, locale = 'vi-VN') => {
-  if (!dateStr) return 'UNKNOWN';
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? 'INVALID_DATE' : d.toLocaleString(locale);
-};

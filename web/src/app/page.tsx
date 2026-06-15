@@ -1,11 +1,14 @@
 import { SchedulerArea } from '@/components/scheduler/SchedulerArea';
+import { Post } from '@/types/scheduler';
 
 export default async function SchedulerPage() {
-  let posts: any[] = [];
+  let posts: Post[] = [];
   let dbError = false;
 
+  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   try {
-    const res = await fetch('http://localhost:8000/api/v1/posts', { cache: 'no-store' });
+    const res = await fetch(`${apiUrl}/api/v1/posts`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch posts');
     const data = await res.json();
     posts = data.posts || [];
@@ -21,7 +24,11 @@ export default async function SchedulerPage() {
         sourcePostId: "mock-123",
         originalText: "This is a placeholder original text.",
         rewrittenText: "Hello folks! This post was automatically rewritten by AI, ready to be scheduled! 😎🔥",
-        status: "REWRITTEN"
+        status: "REWRITTEN",
+        scheduledAt: null,
+        fbPostId: null,
+        sourcePageId: null,
+        createdAt: new Date().toISOString(),
       }
     ];
   }

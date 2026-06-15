@@ -48,7 +48,19 @@ export function SettingsTab({
     intervalValue,
     intervalKey,
     intervalLabel
-  }: any) => (
+  }: {
+    title: string;
+    desc: string;
+    borderColorClass: string;
+    textClass: string;
+    shadowClass: string;
+    borderIndicatorClass: string;
+    isOn: boolean;
+    toggleKey: keyof AutoConfig;
+    intervalValue: number;
+    intervalKey: 'postIntervalMin' | 'scrapeIntervalMin';
+    intervalLabel: string;
+  }) => (
     <div className={`bg-black/80 p-6 border border-zinc-800 relative group ${borderColorClass} transition-colors duration-300 ease-out`}>
       <div className={`absolute top-0 ${toggleKey === 'autoScrapeOn' ? 'right-0 border-r' : 'left-0 border-l'} w-2 h-2 border-t ${borderIndicatorClass} opacity-0 group-hover:opacity-100`} />
       <div className="flex items-start justify-between mb-4">

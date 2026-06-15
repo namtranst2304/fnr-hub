@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Globe, List, Power, Cpu, Terminal } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 import { Post } from '@/types/scheduler';
 import { useScheduler } from '@/hooks/useScheduler';
 import { TABS } from '@/lib/constants';

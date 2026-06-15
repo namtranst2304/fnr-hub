@@ -59,8 +59,9 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
       } else {
         setError(res.error || 'Unknown error occurred while generating.');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to connect to AI server.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Failed to connect to AI server.');
     } finally {
       setIsGenerating(false);
     }

@@ -1,6 +1,5 @@
 import os
 import re
-import psycopg2
 import google.generativeai as genai
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
@@ -95,7 +94,7 @@ def scrape_with_playwright(url: str) -> str:
             except Exception as e2:
                 print("Error scraping card:", e2)
 
-        browser.close()
+        context.close()
         return content.strip()
 
 def scrape_and_process_url(fb_url: str) -> dict:
@@ -113,30 +112,16 @@ def scrape_and_process_url(fb_url: str) -> dict:
         print("Scrape successful, rewriting via AI...")
         rewritten_text = rewrite_text_with_ai(original_text)
         
-        # Save to DB
-        db_url = os.getenv("DATABASE_URL")
-        conn = psycopg2.connect(db_url)
-        cur = conn.cursor()
-        
-        # Check if exists
-        cur.execute('SELECT id FROM "Post" WHERE "sourcePostId" = %s', (source_id,))
-        if cur.fetchone():
-            cur.close()
-            conn.close()
+        # Save to DB using centralized helper
+        from services.db import insert_scraped_post
+        new_id = insert_scraped_post(
+            source_post_id=source_id,
+            original_text=original_text,
+            rewritten_text=rewritten_text,
+        )
+
+        if new_id is None:
             return {"success": False, "error": "This post has already been scraped!"}
-            
-        # Insert
-        insert_query = """
-        INSERT INTO "Post" ("sourcePostId", "originalText", "rewrittenText", "status", "createdAt", "updatedAt")
-        VALUES (%s, %s, %s, 'REWRITTEN', NOW(), NOW())
-        RETURNING id;
-        """
-        cur.execute(insert_query, (source_id, original_text, rewritten_text))
-        new_id = cur.fetchone()[0]
-        conn.commit()
-        
-        cur.close()
-        conn.close()
         
         return {
             "success": True, 

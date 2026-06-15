@@ -46,8 +46,8 @@ def auto_queue_post(req: AutoQueueRequest):
                            WHERE id = %s RETURNING *''',
                         ("SCHEDULED", next_time, req.postId)
                     )
-                conn.commit()
                 post = cur.fetchone()
+                conn.commit()
 
                 if not post:
                     raise HTTPException(status_code=404, detail="Post not found")

@@ -284,6 +284,15 @@ def update_post_rewritten_text(post_id: int, rewritten_text: str) -> dict:
             return dict(cur.fetchone())
 
 
+def delete_post(post_id: int) -> bool:
+    """Delete a post by id. Returns True if a row was deleted."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM "Post" WHERE id = %s', (post_id,))
+            conn.commit()
+            return cur.rowcount > 0
+
+
 def get_next_auto_schedule_time() -> str:
     """Calculate the next available auto-schedule slot based on existing scheduled posts and config interval."""
     config = get_auto_config()

@@ -1,14 +1,16 @@
 import { List, Terminal, Globe, Cpu, Sparkles } from 'lucide-react';
 import { TabKey } from '../types/scheduler';
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export const API_ROUTES = {
-  BASE_URL: 'http://localhost:8000',
-  SOURCES: 'http://localhost:8000/api/sources',
-  AUTO_CONFIG: 'http://localhost:8000/api/auto-config',
-  TRIGGER_SCRAPER: 'http://localhost:8000/api/trigger-scraper',
-  POSTS: 'http://localhost:8000/api/v1/posts',
-  SCHEDULE_FB: 'http://localhost:8000/api/v1/facebook/schedule',
-  AUTO_QUEUE: 'http://localhost:8000/api/auto-queue',
+  BASE_URL,
+  SOURCES: `${BASE_URL}/api/sources`,
+  AUTO_CONFIG: `${BASE_URL}/api/auto-config`,
+  TRIGGER_SCRAPER: `${BASE_URL}/api/trigger-scraper`,
+  POSTS: `${BASE_URL}/api/v1/posts`,
+  SCHEDULE_FB: `${BASE_URL}/api/v1/facebook/schedule`,
+  AUTO_QUEUE: `${BASE_URL}/api/auto-queue`,
 };
 
 export const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
