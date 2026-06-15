@@ -141,7 +141,8 @@ def auto_post_job():
                 logger.info(f"[Auto Post] Publishing post #{post['id']}...")
 
                 # Post immediately to Facebook using shared service
-                result = publish_post_immediately(text_to_post)
+                image_url = post.get("imageUrl")
+                result = publish_post_immediately(text_to_post, image_url)
 
                 if "id" in result:
                     update_post_status(post["id"], "POSTED", fb_post_id=result["id"])

@@ -23,6 +23,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
     selectedPost,
     editedText,
     setEditedText,
+    editedImageUrl,
+    setEditedImageUrl,
     scheduleTime,
     setScheduleTime,
     isLoading,
@@ -62,6 +64,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
     handleSchedulePost,
     handleAutoQueue,
     handleSendToAI,
+    handleUpdateScheduledPost,
+    handleUpdateRawPost,
     handlePushToScheduleDirect,
     handleCreateCustomPost
   } = useScheduler(initialPosts);
@@ -152,6 +156,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
                 handleScrape={handleScrape}
                 handleSendToAI={handleSendToAI}
                 handlePushToSchedule={handlePushToScheduleDirect}
+                handleUpdateRawPost={handleUpdateRawPost}
               />
             )}
 
@@ -170,6 +175,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
                 handleCreateCustomPost={handleCreateCustomPost}
                 editedText={editedText}
                 setEditedText={setEditedText}
+                editedImageUrl={editedImageUrl}
+                setEditedImageUrl={setEditedImageUrl}
                 scheduleTime={scheduleTime}
                 setScheduleTime={setScheduleTime}
                 isLoading={isLoading}
@@ -183,7 +190,11 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
             {/* ──── TAB: SCHEDULED ──── */}
             {activeTab === 'scheduled' && (
-              <ScheduledTab scheduledPosts={scheduledPosts} />
+              <ScheduledTab 
+                scheduledPosts={scheduledPosts} 
+                onUpdateScheduledPost={handleUpdateScheduledPost}
+                onCancelSchedule={handleSendToAI}
+              />
             )}
 
             {/* ──── TAB: SOURCES ──── */}

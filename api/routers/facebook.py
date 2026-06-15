@@ -48,10 +48,11 @@ def schedule_facebook_post(req: ScheduleRequest):
             )
 
         # 5. Call Facebook Graph API via shared service
+        image_url = post.get("imageUrl")
         logger.info(
-            f"Scheduling post #{req.postId} to Facebook at timestamp {timestamp}"
+            f"Scheduling post #{req.postId} to Facebook at timestamp {timestamp}. Image URL: {image_url}"
         )
-        fb_result = schedule_post_for_later(text_to_post, timestamp)
+        fb_result = schedule_post_for_later(text_to_post, timestamp, image_url)
 
         fb_post_id = fb_result.get("id")
         if not fb_post_id:

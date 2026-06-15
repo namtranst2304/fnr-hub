@@ -78,11 +78,11 @@ export const schedulerApi = {
     return res.json();
   },
 
-  updatePost: async (id: number, rewrittenText: string) => {
+  updatePost: async (id: number, updates: { rewrittenText?: string, originalText?: string, imageUrl?: string }) => {
     const res = await fetch(`${API_ROUTES.POSTS}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rewrittenText }),
+      body: JSON.stringify(updates),
     });
     return res.json();
   },

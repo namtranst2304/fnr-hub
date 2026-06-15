@@ -289,14 +289,31 @@ def create_custom_post(original_text: str, rewritten_text: str) -> dict:
             return dict(cur.fetchone())
 
 
-def update_post_rewritten_text(post_id: int, rewritten_text: str) -> dict:
-    """Update a post's rewritten text."""
+def update_post_details(post_id: int, updates: dict) -> dict:
+    """Update a post with a dynamic set of fields."""
+    if not updates:
+        return get_post_by_id(post_id)
+
+    set_clauses = []
+    values = []
+    
+    allowed_keys = {"rewrittenText", "originalText", "imageUrl"}
+    for k, v in updates.items():
+        if k in allowed_keys:
+            set_clauses.append(f'"{k}" = %s')
+            values.append(v)
+            
+    if not set_clauses:
+        return get_post_by_id(post_id)
+        
+    set_clauses.append('"updatedAt" = NOW()')
+    values.append(post_id)
+    
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                """UPDATE "Post" SET "rewrittenText" = %s, "updatedAt" = NOW()
-                   WHERE id = %s RETURNING *""",
-                (rewritten_text, post_id),
+                f'UPDATE "Post" SET {", ".join(set_clauses)} WHERE id = %s RETURNING *',
+                values
             )
             conn.commit()
             return dict(cur.fetchone())

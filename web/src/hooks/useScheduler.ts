@@ -19,6 +19,7 @@ export function useScheduler(initialPosts: Post[]) {
   // Modal State
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editedText, setEditedText] = useState('');
+  const [editedImageUrl, setEditedImageUrl] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -102,6 +103,7 @@ export function useScheduler(initialPosts: Post[]) {
   const closeModal = () => {
     setSelectedPost(null);
     setEditedText('');
+    setEditedImageUrl('');
     setScheduleTime('');
   };
 
@@ -129,9 +131,9 @@ export function useScheduler(initialPosts: Post[]) {
     if (!selectedPost) return;
     setIsLoading(true);
     try {
-      const data = await schedulerApi.updatePost(selectedPost.id, editedText);
+      const data = await schedulerApi.updatePost(selectedPost.id, { rewrittenText: editedText, ...(editedImageUrl && { imageUrl: editedImageUrl }) });
       if (data.success) {
-        setPosts(posts.map(p => p.id === selectedPost.id ? { ...p, rewrittenText: editedText } : p));
+        setPosts(posts.map(p => p.id === selectedPost.id ? { ...p, rewrittenText: editedText, ...(editedImageUrl && { imageUrl: editedImageUrl }) } : p));
         toast.success("Draft saved successfully!");
         closeModal();
       } else {
@@ -237,11 +239,48 @@ export function useScheduler(initialPosts: Post[]) {
         changeTab('editor');
         setSelectedPost(post);
         setEditedText(post.rewrittenText || post.originalText || '');
+        setEditedImageUrl(post.imageUrl || '');
         toast.success('Moved to AI Workspace!');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       toast.error('Failed to move to AI: ' + message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateScheduledPost = async (post: Post, newText: string, newImageUrl?: string) => {
+    setIsLoading(true);
+    try {
+      const data = await schedulerApi.updatePost(post.id, { rewrittenText: newText, ...(newImageUrl && { imageUrl: newImageUrl }) });
+      if (data.success) {
+        setPosts(posts.map(p => p.id === post.id ? { ...p, rewrittenText: newText, ...(newImageUrl && { imageUrl: newImageUrl }) } : p));
+        toast.success("Schedule content updated successfully!");
+      } else {
+        toast.error("Error: " + data.error);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error("Server Error: " + message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateRawPost = async (post: Post, newOriginalText: string, newImageUrl?: string) => {
+    setIsLoading(true);
+    try {
+      const data = await schedulerApi.updatePost(post.id, { originalText: newOriginalText, ...(newImageUrl && { imageUrl: newImageUrl }) });
+      if (data.success) {
+        setPosts(posts.map(p => p.id === post.id ? { ...p, originalText: newOriginalText, ...(newImageUrl && { imageUrl: newImageUrl }) } : p));
+        toast.success("Raw content updated successfully!");
+      } else {
+        toast.error("Error: " + data.error);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error("Server Error: " + message);
     } finally {
       setIsLoading(false);
     }
@@ -376,6 +415,8 @@ export function useScheduler(initialPosts: Post[]) {
     selectedPost,
     editedText,
     setEditedText,
+    editedImageUrl,
+    setEditedImageUrl,
     scheduleTime,
     setScheduleTime,
     isLoading,
@@ -416,6 +457,8 @@ export function useScheduler(initialPosts: Post[]) {
     handleSchedulePost,
     handleAutoQueue,
     handleSendToAI,
+    handleUpdateScheduledPost,
+    handleUpdateRawPost,
     handlePushToScheduleDirect
   };
 }

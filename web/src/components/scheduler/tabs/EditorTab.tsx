@@ -9,16 +9,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface EditorTabProps {
   posts: Post[];
+  selectedPost: Post | null;
   setSelectedPost: (post: Post | null) => void;
   handleCreateCustomPost: (originalText: string) => Promise<void>;
   editedText: string;
   setEditedText: (val: string) => void;
+  editedImageUrl: string;
+  setEditedImageUrl: (val: string) => void;
   scheduleTime: string;
   setScheduleTime: (val: string) => void;
   isLoading: boolean;
   handleSaveDraft: () => void;
   handleDelete: () => void;
   handleSchedulePost: () => void;
+  handleAutoQueue: () => void;
+  config: any;
 }
 
 export function EditorTab({
@@ -28,16 +33,19 @@ export function EditorTab({
   handleCreateCustomPost,
   editedText,
   setEditedText,
+  editedImageUrl,
+  setEditedImageUrl,
   scheduleTime,
   setScheduleTime,
   isLoading,
   handleSaveDraft,
   handleDelete,
-  handleSchedulePost
+  handleSchedulePost,
+  handleAutoQueue,
+  config
 }: EditorTabProps) {
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [customIdea, setCustomIdea] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -46,7 +54,7 @@ export function EditorTab({
   React.useEffect(() => {
     if (selectedPost) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setGeneratedImage(selectedPost.imageUrl || null);
+      setEditedImageUrl(selectedPost.imageUrl || '');
     }
   }, [selectedPost]);
 
@@ -77,7 +85,7 @@ export function EditorTab({
     setTimeout(() => {
       try {
         const img = getCyberImageForText(textToAnalyze);
-        setGeneratedImage(img);
+        setEditedImageUrl(img);
       } catch (err) {
         console.error(err);
         alert('Image generation failed');
@@ -240,13 +248,24 @@ export function EditorTab({
                   placeholder="Input modified text data..."
                 />
 
-                {generatedImage && (
-                  <div className="border border-[#fce205]/30 p-2 bg-black/40 relative group shrink-0">
+                <div className="mt-4 border-t border-zinc-800 pt-4 flex flex-col gap-2">
+                  <label className="text-[10px] uppercase tracking-widest text-[#fce205]">IMAGE_URL_OVERRIDE</label>
+                  <input
+                    type="text"
+                    value={editedImageUrl}
+                    onChange={(e) => setEditedImageUrl(e.target.value)}
+                    placeholder="Enter explicit image URL or generate one..."
+                    className="w-full bg-zinc-900/80 border border-zinc-800 p-2 text-xs text-zinc-300 outline-none focus:border-[#fce205] transition-colors"
+                  />
+                </div>
+
+                {editedImageUrl && (
+                  <div className="border border-[#fce205]/30 p-2 bg-black/40 relative group shrink-0 mt-4">
                      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(252,226,5,0.03)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-10" />
-                     <img src={generatedImage} alt="Generated" className="w-full max-h-48 object-cover border border-zinc-900" />
+                     <img src={editedImageUrl} alt="Generated" className="w-full max-h-48 object-cover border border-zinc-900" />
                      <div className="mt-2 text-[10px] text-zinc-500 font-mono flex items-center justify-between">
                        <span className="flex items-center gap-1 text-[#fce205]/80 uppercase"><ImageIcon className="w-3 h-3"/> IMAGE_ATTACHED.png</span>
-                       <button onClick={() => setGeneratedImage(null)} className="hover:text-red-400 uppercase">REMOVE</button>
+                       <button onClick={() => setEditedImageUrl('')} className="hover:text-red-400 uppercase">REMOVE</button>
                      </div>
                   </div>
                 )}
