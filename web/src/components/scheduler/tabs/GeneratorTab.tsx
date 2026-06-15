@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Bot, Image as ImageIcon, Send, Loader2, Sparkles, X } from 'lucide-react';
 import { schedulerApi } from '@/app/api/schedulerApi';
+import { CyberButton, CyberCard, CyberTextArea } from '@/components/ui/CyberComponents';
 
 interface GeneratorTabProps {
   onSaveToPending: (originalText: string, rewrittenText: string) => void;
@@ -70,36 +71,32 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
   const handleSave = () => {
     if (!generatedText.trim()) return;
     onSaveToPending(prompt, generatedText);
-    // Reset state after saving?
-    // setPrompt('');
-    // removeImage();
-    // setGeneratedText('');
   };
 
   return (
     <div className="space-y-6">
-      <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 shadow-lg shadow-blue-500/5">
-        <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2 mb-4">
-          <Sparkles className="text-blue-400" size={24} />
+      <CyberCard variant="cyan" withCorners>
+        <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2 mb-4 uppercase tracking-widest text-glow-cyan">
+          <Sparkles className="text-neon-cyan" size={24} />
           AI Post Generator
         </h2>
-        <p className="text-slate-400 text-sm mb-6">
+        <p className="text-zinc-400 text-xs font-mono uppercase mb-6 tracking-wide leading-relaxed">
           Enter a prompt or upload an image to let AI generate new content automatically without scraping.
         </p>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm font-mono uppercase">
             {error}
           </div>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Prompt <span className="text-red-400">*</span>
+            <label className="block text-xs font-bold font-mono text-zinc-300 uppercase tracking-wider mb-2">
+              Prompt <span className="text-neon-red">*</span>
             </label>
-            <textarea
-              className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none"
+            <CyberTextArea
+              variant="cyan"
               rows={4}
               placeholder="e.g.: Write a funny review about the newly released AirPods 4..."
               value={prompt}
@@ -108,7 +105,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-xs font-bold font-mono text-zinc-300 uppercase tracking-wider mb-2">
               Attached Image (Optional)
             </label>
             <div className="flex items-center gap-4">
@@ -119,69 +116,73 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
                 ref={fileInputRef}
                 onChange={handleImageUpload}
               />
-              <button
+              <CyberButton
+                variant="zinc"
+                size="sm"
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-600 transition-colors text-sm"
               >
-                <ImageIcon size={16} />
+                <ImageIcon size={14} />
                 Select Image
-              </button>
+              </CyberButton>
               
               {imageName && (
-                <div className="flex items-center gap-2 bg-blue-500/10 text-blue-300 px-3 py-1.5 rounded-lg border border-blue-500/20 text-sm">
+                <div className="flex items-center gap-2 bg-neon-cyan/10 text-neon-cyan px-3 py-1.5 border border-neon-cyan/20 text-xs font-mono">
                   <span className="truncate max-w-[200px]">{imageName}</span>
-                  <button onClick={removeImage} className="hover:text-red-400 transition-colors">
-                    <X size={16} />
+                  <button onClick={removeImage} className="hover:text-neon-red transition-colors cursor-pointer">
+                    <X size={14} />
                   </button>
                 </div>
               )}
             </div>
             {imageBase64 && (
               <div className="mt-4">
-                <img src={imageBase64} alt="Preview" className="max-h-48 rounded-lg border border-slate-700" />
+                <img src={imageBase64} alt="Preview" className="max-h-48 border border-zinc-800 shadow-[0_0_10px_rgba(255,255,255,0.02)]" />
               </div>
             )}
           </div>
 
-          <button
+          <CyberButton
+            variant="cyan"
+            size="lg"
+            fullWidth
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="w-full mt-4 flex items-center justify-center gap-2 border border-[#00f3ff] text-[#00f3ff] hover:bg-[#00f3ff]/20 py-3 font-bold uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_10px_rgba(0,243,255,0.2)] hover:shadow-[0_0_15px_rgba(0,243,255,0.4)] bg-transparent"
           >
             {isGenerating ? (
               <>
-                <Loader2 size={20} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" />
                 GENERATING CONTENT...
               </>
             ) : (
               <>
-                <Bot size={20} />
+                <Bot size={16} />
                 GENERATE NOW
               </>
             )}
-          </button>
+          </CyberButton>
         </div>
-      </div>
+      </CyberCard>
 
       {generatedText && (
-        <div className="bg-slate-900/50 backdrop-blur-sm p-6 rounded-xl border border-green-500/20 shadow-lg shadow-green-500/5 animate-in fade-in slide-in-from-bottom-4">
-          <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mb-4">
-            <Sparkles className="text-green-400" size={20} />
+        <CyberCard variant="yellow" withCorners className="animate-in fade-in slide-in-from-bottom-4">
+          <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mb-4 uppercase tracking-widest text-glow-yellow">
+            <Sparkles className="text-neon-yellow" size={20} />
             Generated Result
           </h3>
-          <div className="bg-slate-950 rounded-lg p-4 text-slate-300 whitespace-pre-wrap font-mono text-sm border border-slate-800">
+          <div className="bg-black/60 rounded-none p-4 text-zinc-300 whitespace-pre-wrap font-mono text-sm border border-zinc-800">
             {generatedText}
           </div>
           <div className="mt-6 flex justify-end">
-            <button
+            <CyberButton
+              variant="yellow"
               onClick={handleSave}
-              className="flex items-center gap-2 border border-[#fce205] text-[#fce205] hover:bg-[#fce205]/20 px-6 py-2.5 font-bold uppercase tracking-wider transition-all shadow-[0_0_10px_rgba(252,226,5,0.2)] hover:shadow-[0_0_15px_rgba(252,226,5,0.4)] bg-transparent"
             >
-              <Send size={18} />
+              <Send size={14} />
               Save to Pending Queue
-            </button>
+            </CyberButton>
           </div>
-        </div>
+        </CyberCard>
       )}
     </div>
   );

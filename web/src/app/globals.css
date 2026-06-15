@@ -10,6 +10,67 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-neon-cyan: #00f3ff;
+  --color-neon-magenta: #ff00ff;
+  --color-neon-yellow: #fce205;
+  --color-neon-red: #ff0000;
+}
+
+/* 
+ * Cyberpunk Custom Utilities
+ */
+@utility cyber-grid {
+  background-image: 
+    linear-gradient(to right, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@utility text-glow-cyan {
+  text-shadow: 0 0 5px #00f3ff;
+}
+@utility text-glow-magenta {
+  text-shadow: 0 0 5px #ff00ff;
+}
+@utility text-glow-yellow {
+  text-shadow: 0 0 5px #fce205;
+}
+@utility text-glow-red {
+  text-shadow: 0 0 5px #ff0000;
+}
+
+@utility shadow-neon-cyan {
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+}
+@utility shadow-neon-cyan-hover {
+  &:hover {
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+  }
+}
+@utility shadow-neon-magenta {
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+}
+@utility shadow-neon-magenta-hover {
+  &:hover {
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+  }
+}
+@utility shadow-neon-yellow {
+  box-shadow: 0 0 10px rgba(252, 226, 5, 0.2);
+}
+@utility shadow-neon-yellow-hover {
+  &:hover {
+    box-shadow: 0 0 15px rgba(252, 226, 5, 0.4);
+  }
+}
+@utility shadow-neon-red {
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+}
+@utility shadow-neon-red-hover {
+  &:hover {
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+  }
 }
 
 html, body {
