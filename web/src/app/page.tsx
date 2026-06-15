@@ -16,7 +16,7 @@ export default async function SchedulerPage() {
     // Not using console.error here because Next.js Dev Overlay will catch it and show a red screen.
     // DB login error is due to user not configuring .env properly, automatically fallback to Mock Data.
     dbError = true;
-    
+
     // Provide a mock post so the UI can still be viewed and tested even if DB is down
     posts = [
       {
