@@ -19,7 +19,7 @@ export default function NotFound() {
           </p>
         </div>
         <div>
-          <Link href="/" passHref legacyBehavior>
+          <Link href="/">
             <CyberButton variant="magenta" className="w-full flex items-center justify-center gap-2">
               <Home size={14} />
               RETURN_TO_DASHBOARD
