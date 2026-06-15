@@ -1,13 +1,17 @@
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+
 from services.generator_service import generate_custom_post
 
 router = APIRouter()
 
+
 class GenerateRequest(BaseModel):
     prompt: str
     image_base64: Optional[str] = None
+
 
 @router.post("/api/generate")
 def trigger_generation(req: GenerateRequest):

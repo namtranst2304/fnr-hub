@@ -1,5 +1,11 @@
-import { X, Save, Trash2, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Save, Trash2, Clock, Bot, ImageIcon, Loader2 } from 'lucide-react';
 import { Post } from '@/types/scheduler';
+import { schedulerApi } from '@/app/api/schedulerApi';
+import { getCyberImageForText } from '../tabs/generator/imageHelper';
+import { CyberTerminalLogs } from '../tabs/generator/CyberTerminalLogs';
+import { CyberImageTerminalLogs } from '../tabs/generator/CyberImageTerminalLogs';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface EditorModalProps {
   selectedPost: Post | null;
@@ -30,7 +36,52 @@ export function EditorModal({
   handleAutoQueue,
   config
 }: EditorModalProps) {
+  const [isGeneratingText, setIsGeneratingText] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (selectedPost) {
+      setGeneratedImage(selectedPost.imageUrl || null);
+    }
+  }, [selectedPost]);
+
   if (!selectedPost) return null;
+
+  const handleAIGenerateText = async () => {
+    setIsGeneratingText(true);
+    try {
+      const prompt = `Rewrite and enhance this content for a social media post:\n\n${selectedPost.originalText}`;
+      const res = await schedulerApi.generateCustomPost(prompt);
+      if (res.success && res.content) {
+        setEditedText(res.content);
+      } else {
+        alert(res.error || 'Failed to generate content');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error connecting to AI');
+    } finally {
+      setIsGeneratingText(false);
+    }
+  };
+
+  const handleAIGenerateImage = () => {
+    setIsGeneratingImage(true);
+    const textToAnalyze = editedText.trim() ? editedText : selectedPost.originalText;
+    
+    setTimeout(() => {
+      try {
+        const img = getCyberImageForText(textToAnalyze);
+        setGeneratedImage(img);
+      } catch (err) {
+        console.error(err);
+        alert('Image generation failed');
+      } finally {
+        setIsGeneratingImage(false);
+      }
+    }, 3000);
+  };
 
   return (
     <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -65,16 +116,72 @@ export function EditorModal({
 
           {/* Right: AI Rewritten */}
           <div className="w-full md:w-7/12 flex flex-col bg-zinc-950">
-            <div className="px-4 py-2 bg-[#ff00ff]/10 border-b border-[#ff00ff]/30 text-[10px] uppercase tracking-widest text-[#ff00ff]">
-              PROCESSED_PAYLOAD (EDITABLE)
+            <div className="px-4 py-2 bg-[#ff00ff]/10 border-b border-[#ff00ff]/30 text-[10px] uppercase tracking-widest text-[#ff00ff] flex justify-between items-center">
+              <span>PROCESSED_PAYLOAD (EDITABLE)</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handleAIGenerateText}
+                  disabled={isGeneratingText || isGeneratingImage || isLoading}
+                  className="flex items-center gap-1 bg-[#ff00ff]/20 hover:bg-[#ff00ff]/40 text-[#ff00ff] px-2 py-0.5 border border-[#ff00ff]/50 rounded-sm transition-all disabled:opacity-50"
+                >
+                  {isGeneratingText ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bot className="w-3 h-3" />}
+                  {isGeneratingText ? 'PROCESSING...' : 'AI GEN TEXT'}
+                </button>
+                <button 
+                  onClick={handleAIGenerateImage}
+                  disabled={isGeneratingText || isGeneratingImage || isLoading}
+                  className="flex items-center gap-1 bg-[#fce205]/20 hover:bg-[#fce205]/40 text-[#fce205] px-2 py-0.5 border border-[#fce205]/50 rounded-sm transition-all disabled:opacity-50"
+                >
+                  {isGeneratingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
+                  {isGeneratingImage ? 'PROCESSING...' : 'AI GEN IMAGE'}
+                </button>
+              </div>
             </div>
-            <div className="flex-1 relative">
-              <textarea
-                value={editedText}
-                onChange={e => setEditedText(e.target.value)}
-                className="absolute inset-0 w-full h-full p-6 bg-transparent text-sm text-zinc-200 outline-none resize-none leading-relaxed focus:bg-[#ff00ff]/5 transition-colors duration-300 ease-out"
-                placeholder="Input modified text data..."
-              />
+            <div className="flex-1 relative flex flex-col p-4 gap-4 overflow-y-auto overflow-x-hidden">
+              <AnimatePresence>
+                {isGeneratingText && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <CyberTerminalLogs />
+                  </motion.div>
+                )}
+                {isGeneratingImage && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <CyberImageTerminalLogs />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {!isGeneratingText && !isGeneratingImage && (
+                <>
+                  <textarea
+                    value={editedText}
+                    onChange={e => setEditedText(e.target.value)}
+                    className="w-full min-h-[200px] flex-1 p-4 bg-transparent border border-zinc-800 text-sm text-zinc-200 outline-none resize-none leading-relaxed focus:border-[#ff00ff] focus:bg-[#ff00ff]/5 transition-colors duration-300 ease-out"
+                    placeholder="Input modified text data..."
+                  />
+
+                  {generatedImage && (
+                    <div className="border border-[#fce205]/30 p-2 bg-black/40 relative group shrink-0">
+                       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(252,226,5,0.03)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-10" />
+                       <img src={generatedImage} alt="Generated" className="w-full max-h-48 object-cover border border-zinc-900" />
+                       <div className="mt-2 text-[10px] text-zinc-500 font-mono flex items-center justify-between">
+                         <span className="flex items-center gap-1 text-[#fce205]/80 uppercase"><ImageIcon className="w-3 h-3"/> IMAGE_ATTACHED.png</span>
+                         <button onClick={() => setGeneratedImage(null)} className="hover:text-red-400 uppercase">REMOVE</button>
+                       </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

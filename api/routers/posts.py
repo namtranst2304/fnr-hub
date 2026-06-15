@@ -1,16 +1,26 @@
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
-from services.db import get_all_posts, create_custom_post, update_post_rewritten_text, delete_post
+
+from services.db import (
+    create_custom_post,
+    delete_post,
+    get_all_posts,
+    update_post_rewritten_text,
+)
 
 router = APIRouter(prefix="/api/v1/posts", tags=["Posts"])
+
 
 class CreatePostRequest(BaseModel):
     originalText: str
     rewrittenText: Optional[str] = None
 
+
 class UpdatePostRequest(BaseModel):
     rewrittenText: str
+
 
 @router.get("")
 def list_posts():
@@ -21,6 +31,7 @@ def list_posts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("")
 def create_post(req: CreatePostRequest):
     """Create a new custom post."""
@@ -29,6 +40,7 @@ def create_post(req: CreatePostRequest):
         return {"success": True, "post": post}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.put("/{post_id}")
 def update_post(post_id: int, req: UpdatePostRequest):
@@ -42,6 +54,7 @@ def update_post(post_id: int, req: UpdatePostRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.delete("/{post_id}")
 def remove_post(post_id: int):

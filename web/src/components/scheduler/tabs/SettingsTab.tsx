@@ -12,6 +12,65 @@ interface SettingsTabProps {
   handleUpdateInterval: (key: 'postIntervalMin' | 'scrapeIntervalMin' | 'aiPromptRules', value: number | string) => void;
 }
 
+interface ConfigCardProps {
+  title: string;
+  desc: string;
+  borderColorClass: string;
+  textClass: string;
+  shadowClass: string;
+  borderIndicatorClass: string;
+  isOn: boolean;
+  toggleKey: keyof AutoConfig;
+  intervalValue: number;
+  intervalKey: 'postIntervalMin' | 'scrapeIntervalMin';
+  intervalLabel: string;
+  handleToggleConfig: (key: keyof AutoConfig) => void;
+  handleUpdateInterval: (key: 'postIntervalMin' | 'scrapeIntervalMin' | 'aiPromptRules', value: number | string) => void;
+}
+
+const ConfigCard = ({
+  title,
+  desc,
+  borderColorClass,
+  textClass,
+  shadowClass,
+  borderIndicatorClass,
+  isOn,
+  toggleKey,
+  intervalValue,
+  intervalKey,
+  intervalLabel,
+  handleToggleConfig,
+  handleUpdateInterval
+}: ConfigCardProps) => (
+  <div className={`bg-black/80 p-6 border border-zinc-800 relative group ${borderColorClass} transition-colors duration-300 ease-out`}>
+    <div className={`absolute top-0 ${toggleKey === 'autoScrapeOn' ? 'right-0 border-r' : 'left-0 border-l'} w-2 h-2 border-t ${borderIndicatorClass} opacity-0 group-hover:opacity-100`} />
+    <div className="flex items-start justify-between mb-4">
+      <div>
+        <h3 className={`font-bold ${textClass} text-sm uppercase tracking-widest mb-1`}>{title}</h3>
+        <p className="text-[10px] text-zinc-500 leading-relaxed">{desc}</p>
+      </div>
+      <button onClick={() => handleToggleConfig(toggleKey)} className="shrink-0 ml-4">
+        {isOn
+          ? <ToggleRight className={`w-10 h-10 ${textClass} ${shadowClass}`} />
+          : <ToggleLeft className="w-10 h-10 text-zinc-700" />
+        }
+      </button>
+    </div>
+    {isOn && (
+      <div className="mt-6 pt-4 border-t border-zinc-800/50">
+        <label className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 block">{intervalLabel}</label>
+        <input
+          type="number"
+          value={intervalValue}
+          onChange={(e) => handleUpdateInterval(intervalKey, parseInt(e.target.value) || 30)}
+          className={`w-full bg-black border border-zinc-700 focus:${borderColorClass.replace('hover:', '')} ${textClass} px-4 py-2 outline-none text-sm`}
+        />
+      </div>
+    )}
+  </div>
+);
+
 export function SettingsTab({
   config,
   schedulerRunning,
@@ -34,60 +93,6 @@ export function SettingsTab({
     setIsSavingPrompt(false);
     toast.success('AI Rules saved!');
   };
-
-  // Helper component to avoid duplication
-  const ConfigCard = ({
-    title,
-    desc,
-    borderColorClass,
-    textClass,
-    shadowClass,
-    borderIndicatorClass,
-    isOn,
-    toggleKey,
-    intervalValue,
-    intervalKey,
-    intervalLabel
-  }: {
-    title: string;
-    desc: string;
-    borderColorClass: string;
-    textClass: string;
-    shadowClass: string;
-    borderIndicatorClass: string;
-    isOn: boolean;
-    toggleKey: keyof AutoConfig;
-    intervalValue: number;
-    intervalKey: 'postIntervalMin' | 'scrapeIntervalMin';
-    intervalLabel: string;
-  }) => (
-    <div className={`bg-black/80 p-6 border border-zinc-800 relative group ${borderColorClass} transition-colors duration-300 ease-out`}>
-      <div className={`absolute top-0 ${toggleKey === 'autoScrapeOn' ? 'right-0 border-r' : 'left-0 border-l'} w-2 h-2 border-t ${borderIndicatorClass} opacity-0 group-hover:opacity-100`} />
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className={`font-bold ${textClass} text-sm uppercase tracking-widest mb-1`}>{title}</h3>
-          <p className="text-[10px] text-zinc-500 leading-relaxed">{desc}</p>
-        </div>
-        <button onClick={() => handleToggleConfig(toggleKey)} className="shrink-0 ml-4">
-          {isOn
-            ? <ToggleRight className={`w-10 h-10 ${textClass} ${shadowClass}`} />
-            : <ToggleLeft className="w-10 h-10 text-zinc-700" />
-          }
-        </button>
-      </div>
-      {isOn && (
-        <div className="mt-6 pt-4 border-t border-zinc-800/50">
-          <label className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 block">{intervalLabel}</label>
-          <input
-            type="number"
-            value={intervalValue}
-            onChange={(e) => handleUpdateInterval(intervalKey, parseInt(e.target.value) || 30)}
-            className={`w-full bg-black border border-zinc-700 focus:${borderColorClass.replace('hover:', '')} ${textClass} px-4 py-2 outline-none text-sm`}
-          />
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -124,6 +129,8 @@ export function SettingsTab({
           intervalValue={config.scrapeIntervalMin}
           intervalKey="scrapeIntervalMin"
           intervalLabel="CYCLES_DELAY_MINS"
+          handleToggleConfig={handleToggleConfig}
+          handleUpdateInterval={handleUpdateInterval}
         />
 
         <ConfigCard
@@ -138,6 +145,8 @@ export function SettingsTab({
           intervalValue={config.postIntervalMin}
           intervalKey="postIntervalMin"
           intervalLabel="QUEUE_THROTTLE_MINS"
+          handleToggleConfig={handleToggleConfig}
+          handleUpdateInterval={handleUpdateInterval}
         />
       </div>
 
@@ -147,7 +156,7 @@ export function SettingsTab({
           <Cpu className="w-4 h-4" /> AI INSTRUCTION
         </h3>
         <p className="text-[10px] text-zinc-400 leading-relaxed mb-4">
-          Set up "System Instruction" for AI when rewriting or generating new posts. You can define the tone, add mandatory hashtags, or specify emojis here.
+          Set up &quot;System Instruction&quot; for AI when rewriting or generating new posts. You can define the tone, add mandatory hashtags, or specify emojis here.
         </p>
         <textarea
           value={localPrompt}

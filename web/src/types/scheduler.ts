@@ -3,6 +3,7 @@ export interface Post {
   sourcePostId: string;
   originalText: string;
   rewrittenText: string | null;
+  imageUrl?: string | null;
   status: string;
   scheduledAt: string | null;
   fbPostId: string | null;

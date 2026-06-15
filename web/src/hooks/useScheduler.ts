@@ -79,7 +79,9 @@ export function useScheduler(initialPosts: Post[]) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line
     if (activeTab === 'sources') fetchSources();
+    // eslint-disable-next-line
     if (activeTab === 'settings') fetchConfig();
   }, [activeTab, fetchSources, fetchConfig]);
 

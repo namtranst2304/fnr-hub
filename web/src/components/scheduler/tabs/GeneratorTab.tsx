@@ -1,82 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Image as ImageIcon, Send, Loader2, Sparkles, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Bot, Image as ImageIcon, Send, Loader2, Sparkles, X, RefreshCw } from 'lucide-react';
 import { schedulerApi } from '@/app/api/schedulerApi';
 import { CyberButton, CyberCard, CyberTextArea } from '@/components/ui/CyberComponents';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// ─── CYBER SCANLINE ANIMATION ──────────────────────────────────────────────────
-function CyberScanner() {
-  return (
-    <motion.div
-      initial={{ top: "0%" }}
-      animate={{ top: ["0%", "100%", "0%"] }}
-      transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute left-0 w-full h-[2px] bg-neon-cyan shadow-[0_0_8px_#00f3ff,0_0_12px_#00f3ff] pointer-events-none z-10"
-    />
-  );
-}
-
-// ─── CYBER LOGS DECRYPTION LOG SCREEN ──────────────────────────────────────────
-const MOCK_LOGS = [
-  'INITIALIZING QUANTUM ENGINES...',
-  'ESTABLISHING SECURE LINK TO GEMINI CORE...',
-  'TRANSMITTING INPUT PAYLOAD PROTOCOLS...',
-  'SCANNING PROMPT COMPLEXITY PARAMETERS...',
-  'DECRYPTING AI NODE RESPONSES...',
-  'SYNTHESIZING NEW SYNTACTIC CODES...',
-  'RESOLVING LLM NEURAL MATRIX STATES...',
-  'COMPILING MARKDOWN ABSTRACT TREE...',
-  'FINALIZING DATA STREAM VERIFICATION...'
-];
-
-function CyberTerminalLogs() {
-  const [currentLogs, setCurrentLogs] = useState<string[]>([]);
-
-  useEffect(() => {
-    let idx = 0;
-    setCurrentLogs([`[SYS_LOG]: ${MOCK_LOGS[0]}`]);
-    
-    const interval = setInterval(() => {
-      idx++;
-      if (idx < MOCK_LOGS.length) {
-        setCurrentLogs(prev => [...prev, `[SYS_LOG]: ${MOCK_LOGS[idx]}`]);
-      } else {
-        const randomNoise = `[SYS_LOG]: RUNNING_TICK_${Math.floor(Math.random() * 1000)}: DECODING_STREAM_DATA...`;
-        setCurrentLogs(prev => [...prev.slice(1), randomNoise]);
-      }
-    }, 600);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="bg-black/90 border border-neon-cyan/30 p-4 font-mono text-[10px] text-neon-cyan/80 space-y-1 relative overflow-hidden select-none h-40 flex flex-col justify-end">
-      {/* Grid pattern overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00f3ff08_1px,transparent_1px),linear-gradient(to_bottom,#00f3ff08_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
-      
-      {/* Scanner line inside log box */}
-      <CyberScanner />
-      
-      <div className="absolute top-2 right-4 flex items-center gap-1.5 animate-pulse">
-        <span className="w-1.5 h-1.5 bg-neon-cyan" />
-        <span className="tracking-widest text-[8px] uppercase">DECRYPTING...</span>
-      </div>
-      
-      <div className="z-10 overflow-y-auto space-y-1 scrollbar-hide max-h-full">
-        {currentLogs.map((log, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <span className="text-neon-cyan/40">✓</span>
-            <span className="whitespace-nowrap truncate">{log}</span>
-          </div>
-        ))}
-        <div className="flex items-center gap-1">
-          <span className="text-neon-cyan animate-pulse">▋</span>
-          <span className="text-neon-cyan/40 uppercase">PROCESS_AWAIT</span>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { CyberScanner } from './generator/CyberScanner';
+import { CyberTerminalLogs } from './generator/CyberTerminalLogs';
+import { CyberImageTerminalLogs } from './generator/CyberImageTerminalLogs';
+import { getCyberImageForText } from './generator/imageHelper';
 
 interface GeneratorTabProps {
   onSaveToPending: (originalText: string, rewrittenText: string) => void;
@@ -89,6 +20,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
   const [generatedText, setGeneratedText] = useState('');
   const [modelUsed, setModelUsed] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [error, setError] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,10 +59,13 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
     }
 
     setIsGenerating(true);
+    setGeneratedText('');
+    setModelUsed('');
     setError('');
+    removeImage(); // Clear any previous image when starting a new text generation
     
     try {
-      const res = await schedulerApi.generateCustomPost(prompt, imageBase64);
+      const res = await schedulerApi.generateCustomPost(prompt);
       if (res.success && res.content) {
         setGeneratedText(res.content);
         setModelUsed(res.model_used || '');
@@ -143,6 +78,24 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleGenerateAIImage = () => {
+    setIsGeneratingImage(true);
+    setError('');
+    
+    setTimeout(() => {
+      try {
+        const imageUrl = getCyberImageForText(generatedText);
+        setImageBase64(imageUrl);
+        setImageName('AI_GENERATED_GRAPHIC.png');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError('Image generation failed: ' + message);
+      } finally {
+        setIsGeneratingImage(false);
+      }
+    }, 4000);
   };
 
   const handleSave = () => {
@@ -158,7 +111,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
           AI Post Generator
         </h2>
         <p className="text-zinc-400 text-xs font-mono uppercase mb-6 tracking-wide leading-relaxed">
-          Enter a prompt or upload an image to let AI generate new content automatically without scraping.
+          Enter a prompt to let AI generate new content automatically without scraping.
         </p>
 
         {error && (
@@ -183,45 +136,6 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
                 disabled={isGenerating}
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold font-mono text-zinc-300 uppercase tracking-wider mb-2">
-              Attached Image (Optional)
-            </label>
-            <div className="flex items-center gap-4">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-              />
-              <CyberButton
-                variant="zinc"
-                size="sm"
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isGenerating}
-              >
-                <ImageIcon size={14} />
-                Select Image
-              </CyberButton>
-              
-              {imageName && (
-                <div className="flex items-center gap-2 bg-neon-cyan/10 text-neon-cyan px-3 py-1.5 border border-neon-cyan/20 text-xs font-mono">
-                  <span className="truncate max-w-[200px]">{imageName}</span>
-                  <button onClick={removeImage} className="hover:text-neon-red transition-colors cursor-pointer" disabled={isGenerating}>
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
-            </div>
-            {imageBase64 && (
-              <div className="mt-4">
-                <img src={imageBase64} alt="Preview" className="max-h-48 border border-zinc-800 shadow-[0_0_10px_rgba(255,255,255,0.02)]" />
-              </div>
-            )}
           </div>
 
           <CyberButton
@@ -261,14 +175,124 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
       </CyberCard>
 
       {generatedText && (
-        <CyberCard variant="yellow" withCorners className="animate-in fade-in slide-in-from-bottom-4">
-          <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mb-4 uppercase tracking-widest text-glow-yellow">
-            <Sparkles className="text-neon-yellow" size={20} />
-            Generated Result
-          </h3>
-          <div className="bg-black/60 rounded-none p-4 text-zinc-300 whitespace-pre-wrap font-mono text-sm border border-zinc-800">
-            {generatedText}
+        <CyberCard variant="yellow" withCorners className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+          <div>
+            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mb-4 uppercase tracking-widest text-glow-yellow">
+              <Sparkles className="text-neon-yellow" size={20} />
+              Generated Result
+            </h3>
+            <div className="bg-black/60 rounded-none p-4 text-zinc-300 whitespace-pre-wrap font-mono text-sm border border-zinc-800">
+              {generatedText}
+            </div>
           </div>
+
+          {/* ─── POST-GENERATED IMAGE ATTACHMENT SECTION ─── */}
+          <div className="border-t border-zinc-800/60 pt-6 space-y-4">
+            <h4 className="text-xs font-bold font-mono text-zinc-300 uppercase tracking-widest flex items-center gap-2">
+              <ImageIcon size={14} className="text-neon-yellow" />
+              Attached Media Link (Optional)
+            </h4>
+
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              disabled={isGeneratingImage}
+            />
+
+            <AnimatePresence mode="wait">
+              {isGeneratingImage ? (
+                <motion.div
+                  key="generating-image-logs"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="rounded-none overflow-hidden"
+                >
+                  <CyberImageTerminalLogs />
+                </motion.div>
+              ) : imageBase64 ? (
+                <motion.div
+                  key="image-preview"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  className="relative group border border-neon-yellow/30 p-2 bg-black/40 overflow-hidden"
+                >
+                  {/* Cyber Scanline Overlay inside Preview */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(252,226,5,0.03)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-10" />
+                  
+                  <img
+                    src={imageBase64}
+                    alt="AI Post Attachment Preview"
+                    className="max-h-64 object-cover w-full border border-zinc-900 group-hover:opacity-90 transition-opacity"
+                  />
+                  
+                  <div className="mt-3 flex items-center justify-between gap-3 text-[10px] font-mono text-zinc-400">
+                    <span className="truncate max-w-[250px] text-neon-yellow/80 select-all">
+                      LINKED_ASSET: {imageName}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleGenerateAIImage}
+                        className="text-zinc-400 hover:text-neon-yellow flex items-center gap-1 transition-colors cursor-pointer border border-zinc-800 bg-black/40 px-2 py-1 uppercase"
+                        title="Regenerate dynamic image"
+                      >
+                        <RefreshCw size={10} />
+                        Re-Gen
+                      </button>
+                      <button
+                        onClick={removeImage}
+                        className="text-zinc-400 hover:text-neon-red flex items-center gap-1 transition-colors cursor-pointer border border-zinc-800 bg-black/40 px-2 py-1 uppercase"
+                      >
+                        <X size={10} />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="empty-media-slot"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="border border-dashed border-zinc-800 p-6 flex flex-col items-center justify-center text-center bg-black/20"
+                >
+                  <span className="text-[10px] text-zinc-600 font-mono tracking-widest uppercase mb-4">
+                    [SECURE_MEDIA_SLOT: EMPTY]
+                  </span>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <CyberButton
+                      variant="zinc"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImageIcon size={12} />
+                      Attach Local File
+                    </CyberButton>
+
+                    <CyberButton
+                      variant="yellow"
+                      size="sm"
+                      onClick={handleGenerateAIImage}
+                    >
+                      <Bot size={12} />
+                      AI Generate Graphic
+                    </CyberButton>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <p className="text-[9px] text-zinc-600 font-mono uppercase leading-relaxed">
+              *Note: Local database stores text elements only. Media attachments are used for layout visualization and mock Facebook API templates.
+            </p>
+          </div>
+
           <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-zinc-950 pt-4">
             <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider select-none">
               ENGINES_LOG: MODEL_IN_USE = <span className="text-neon-yellow text-glow-yellow">{modelUsed || 'UNKNOWN'}</span>
@@ -276,6 +300,7 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
             <CyberButton
               variant="yellow"
               onClick={handleSave}
+              disabled={isGeneratingImage}
             >
               <Send size={14} />
               Save to Pending Queue
@@ -286,3 +311,4 @@ export function GeneratorTab({ onSaveToPending }: GeneratorTabProps) {
     </div>
   );
 }
+

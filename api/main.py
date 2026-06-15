@@ -1,8 +1,18 @@
-from contextlib import asynccontextmanager
 import os
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import facebook, scraper, sources, auto_config, auto_queue, generator, posts
+
+from routers import (
+    auto_config,
+    auto_queue,
+    facebook,
+    generator,
+    posts,
+    scraper,
+    sources,
+)
 from services.auto_scheduler import start_scheduler, stop_scheduler
 
 

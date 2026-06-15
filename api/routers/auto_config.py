@@ -1,11 +1,14 @@
 """
 Router for managing AutoPostConfig and scheduler status.
 """
+
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
-from services.db import get_auto_config, update_auto_config
+
 from services.auto_scheduler import get_scheduler_status
+from services.db import get_auto_config, update_auto_config
 
 router = APIRouter(prefix="/api/auto-config", tags=["AutoConfig"])
 
@@ -24,11 +27,7 @@ def get_config():
     try:
         config = get_auto_config()
         status = get_scheduler_status()
-        return {
-            "success": True,
-            "config": config,
-            "scheduler": status
-        }
+        return {"success": True, "config": config, "scheduler": status}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -40,10 +39,6 @@ def set_config(req: UpdateConfigRequest):
         data = req.model_dump(exclude_none=True)
         config = update_auto_config(data)
         status = get_scheduler_status()
-        return {
-            "success": True,
-            "config": config,
-            "scheduler": status
-        }
+        return {"success": True, "config": config, "scheduler": status}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

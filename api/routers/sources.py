@@ -2,14 +2,17 @@
 Router for managing SourcePage CRUD operations.
 These endpoints are called from the Next.js frontend.
 """
+
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+
 from services.db import (
-    get_all_source_pages,
     create_source_page,
-    update_source_page,
     delete_source_page,
+    get_all_source_pages,
+    update_source_page,
 )
 
 router = APIRouter(prefix="/api/sources", tags=["Sources"])

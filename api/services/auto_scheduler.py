@@ -7,9 +7,10 @@ Uses APScheduler to run two recurring jobs:
 
 The scheduler is started/stopped via FastAPI lifespan events.
 """
-import os
+
 import logging
 from datetime import datetime, timezone
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from dotenv import load_dotenv
@@ -27,6 +28,7 @@ scheduler = BackgroundScheduler(timezone="UTC")
 # Job 1: Auto Scrape
 # ──────────────────────────────────────────────
 
+
 def auto_scrape_job():
     """
     Runs periodically. For each active SourcePage:
@@ -34,8 +36,17 @@ def auto_scrape_job():
     - Rewrite with AI
     - Save to DB
     """
-    from services.db import get_auto_config, get_active_source_pages, update_source_last_scraped, insert_scraped_post
-    from services.scraper_job import scrape_with_playwright, rewrite_text_with_ai, extract_post_id
+    from services.db import (
+        get_active_source_pages,
+        get_auto_config,
+        insert_scraped_post,
+        update_source_last_scraped,
+    )
+    from services.scraper_job import (
+        extract_post_id,
+        rewrite_text_with_ai,
+        scrape_with_playwright,
+    )
 
     try:
         config = get_auto_config()
@@ -50,13 +61,17 @@ def auto_scrape_job():
 
         for source in sources:
             try:
-                logger.info(f"[Auto Scrape] Scraping: {source['name']} ({source['url']})")
+                logger.info(
+                    f"[Auto Scrape] Scraping: {source['name']} ({source['url']})"
+                )
 
                 # Scrape the page
                 original_text = scrape_with_playwright(source["url"])
 
                 if not original_text or len(original_text.strip()) < 20:
-                    logger.warning(f"[Auto Scrape] No valid content from {source['name']}")
+                    logger.warning(
+                        f"[Auto Scrape] No valid content from {source['name']}"
+                    )
                     continue
 
                 # Generate a source post ID from the URL
@@ -70,13 +85,17 @@ def auto_scrape_job():
                     source_post_id=source_post_id,
                     original_text=original_text,
                     rewritten_text=rewritten,
-                    source_page_id=source["id"]
+                    source_page_id=source["id"],
                 )
 
                 if new_id:
-                    logger.info(f"[Auto Scrape] Saved new post #{new_id} from {source['name']}")
+                    logger.info(
+                        f"[Auto Scrape] Saved new post #{new_id} from {source['name']}"
+                    )
                 else:
-                    logger.info(f"[Auto Scrape] Duplicate or failed for {source['name']}")
+                    logger.info(
+                        f"[Auto Scrape] Duplicate or failed for {source['name']}"
+                    )
 
                 # Update last scraped timestamp
                 update_source_last_scraped(source["id"])
@@ -92,17 +111,22 @@ def auto_scrape_job():
 # Job 2: Auto Post
 # ──────────────────────────────────────────────
 
+
 def auto_post_job():
     """
     Runs every minute. Checks for SCHEDULED posts where scheduledAt <= now.
     Posts them to Facebook and updates status.
-    
+
     NOTE: Current schedule-fb route uses FB's scheduled_publish_time,
     so FB handles the timing. This job is for posts scheduled via "Auto Queue"
     where we want to control timing ourselves (published=true, post immediately).
     """
 
-    from services.db import get_auto_config, get_posts_ready_to_publish, update_post_status
+    from services.db import (
+        get_auto_config,
+        get_posts_ready_to_publish,
+        update_post_status,
+    )
 
     try:
         config = get_auto_config()
@@ -113,15 +137,15 @@ def auto_post_job():
         if not posts:
             return
 
-
-
         from services.facebook_service import publish_post_immediately
 
         for post in posts:
             try:
                 text_to_post = post.get("rewrittenText") or post.get("originalText", "")
                 if not text_to_post:
-                    logger.warning(f"[Auto Post] Post #{post['id']} has no text — skipping.")
+                    logger.warning(
+                        f"[Auto Post] Post #{post['id']} has no text — skipping."
+                    )
                     continue
 
                 logger.info(f"[Auto Post] Publishing post #{post['id']}...")
@@ -131,11 +155,15 @@ def auto_post_job():
 
                 if "id" in result:
                     update_post_status(post["id"], "POSTED", fb_post_id=result["id"])
-                    logger.info(f"[Auto Post] ✅ Post #{post['id']} published! FB ID: {result['id']}")
+                    logger.info(
+                        f"[Auto Post] ✅ Post #{post['id']} published! FB ID: {result['id']}"
+                    )
                 else:
                     error_msg = result.get("error", {}).get("message", str(result))
                     update_post_status(post["id"], "FAILED")
-                    logger.error(f"[Auto Post] ❌ Post #{post['id']} failed: {error_msg}")
+                    logger.error(
+                        f"[Auto Post] ❌ Post #{post['id']} failed: {error_msg}"
+                    )
 
             except Exception as e:
                 update_post_status(post["id"], "FAILED")
@@ -148,6 +176,7 @@ def auto_post_job():
 # ──────────────────────────────────────────────
 # Scheduler lifecycle
 # ──────────────────────────────────────────────
+
 
 def start_scheduler():
     """Start the background scheduler with both jobs."""
@@ -191,11 +220,13 @@ def get_scheduler_status() -> dict:
     jobs = []
     if scheduler.running:
         for job in scheduler.get_jobs():
-            jobs.append({
-                "id": job.id,
-                "name": job.name,
-                "next_run": str(job.next_run_time) if job.next_run_time else None,
-            })
+            jobs.append(
+                {
+                    "id": job.id,
+                    "name": job.name,
+                    "next_run": str(job.next_run_time) if job.next_run_time else None,
+                }
+            )
 
     return {
         "running": scheduler.running,

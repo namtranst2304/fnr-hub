@@ -1,12 +1,15 @@
 """
 Router for auto-queue: quickly schedule a post to the next available slot.
 """
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-from services.db import get_next_auto_schedule_time, get_connection
-from psycopg2.extras import RealDictCursor
+
 from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, HTTPException
+from psycopg2.extras import RealDictCursor
+from pydantic import BaseModel
+
+from services.db import get_connection, get_next_auto_schedule_time
 
 router = APIRouter(prefix="/api/auto-queue", tags=["AutoQueue"])
 
@@ -28,23 +31,17 @@ def auto_queue_post(req: AutoQueueRequest):
 
         with get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                # Update rewrittenText if provided
-                updates = {
-                    "status": "SCHEDULED",
-                    "scheduledAt": next_time,
-                }
-
                 if req.rewrittenText:
                     cur.execute(
-                        '''UPDATE "Post" SET "rewrittenText" = %s, status = %s, "scheduledAt" = %s, "updatedAt" = NOW()
-                           WHERE id = %s RETURNING *''',
-                        (req.rewrittenText, "SCHEDULED", next_time, req.postId)
+                        """UPDATE "Post" SET "rewrittenText" = %s, status = %s, "scheduledAt" = %s, "updatedAt" = NOW()
+                           WHERE id = %s RETURNING *""",
+                        (req.rewrittenText, "SCHEDULED", next_time, req.postId),
                     )
                 else:
                     cur.execute(
-                        '''UPDATE "Post" SET status = %s, "scheduledAt" = %s, "updatedAt" = NOW()
-                           WHERE id = %s RETURNING *''',
-                        ("SCHEDULED", next_time, req.postId)
+                        """UPDATE "Post" SET status = %s, "scheduledAt" = %s, "updatedAt" = NOW()
+                           WHERE id = %s RETURNING *""",
+                        ("SCHEDULED", next_time, req.postId),
                     )
                 post = cur.fetchone()
                 conn.commit()

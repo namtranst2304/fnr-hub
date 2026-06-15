@@ -2,12 +2,14 @@
 Centralized database helpers for the FastAPI backend.
 Uses psycopg2 with the same DATABASE_URL from .env.
 """
+
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from dotenv import load_dotenv
 from contextlib import contextmanager
 from typing import Optional
+
+import psycopg2
+from dotenv import load_dotenv
+from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
@@ -29,6 +31,7 @@ def get_connection():
 # ──────────────────────────────────────────────
 # SourcePage helpers
 # ──────────────────────────────────────────────
+
 
 def get_active_source_pages() -> list[dict]:
     """Return all SourcePages where isActive = true."""
@@ -53,10 +56,10 @@ def create_source_page(url: str, name: str, interval: int = 30) -> dict:
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                '''INSERT INTO "SourcePage" ("url", "name", "interval", "isActive", "lastScraped", "createdAt", "updatedAt")
+                """INSERT INTO "SourcePage" ("url", "name", "interval", "isActive", "lastScraped", "createdAt", "updatedAt")
                    VALUES (%s, %s, %s, TRUE, NULL, NOW(), NOW())
-                   RETURNING *''',
-                (url, name, interval)
+                   RETURNING *""",
+                (url, name, interval),
             )
             conn.commit()
             return dict(cur.fetchone())
@@ -79,7 +82,7 @@ def update_source_page(source_id: int, data: dict) -> Optional[dict]:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 f'UPDATE "SourcePage" SET {", ".join(set_clauses)} WHERE id = %s RETURNING *',
-                values
+                values,
             )
             conn.commit()
             row = cur.fetchone()
@@ -101,7 +104,7 @@ def update_source_last_scraped(source_id: int):
         with conn.cursor() as cur:
             cur.execute(
                 'UPDATE "SourcePage" SET "lastScraped" = NOW(), "updatedAt" = NOW() WHERE id = %s',
-                (source_id,)
+                (source_id,),
             )
             conn.commit()
 
@@ -109,6 +112,7 @@ def update_source_last_scraped(source_id: int):
 # ──────────────────────────────────────────────
 # AutoPostConfig helpers (singleton, id=1)
 # ──────────────────────────────────────────────
+
 
 def get_auto_config() -> dict:
     """Get the singleton AutoPostConfig row, creating it if it doesn't exist."""
@@ -121,10 +125,10 @@ def get_auto_config() -> dict:
             # Create default row
             default_prompt = "Translate and rewrite the following text in English using a Gen Z humor style, inserting appropriate emojis, while keeping the main idea."
             cur.execute(
-                '''INSERT INTO "AutoPostConfig" (id, "autoScrapeOn", "autoPostOn", "postIntervalMin", "scrapeIntervalMin", "aiPromptRules", "updatedAt")
+                """INSERT INTO "AutoPostConfig" (id, "autoScrapeOn", "autoPostOn", "postIntervalMin", "scrapeIntervalMin", "aiPromptRules", "updatedAt")
                    VALUES (1, FALSE, FALSE, 120, 30, %s, NOW())
-                   RETURNING *''',
-                (default_prompt,)
+                   RETURNING *""",
+                (default_prompt,),
             )
             conn.commit()
             return dict(cur.fetchone())
@@ -134,7 +138,13 @@ def update_auto_config(data: dict) -> dict:
     """Update the singleton AutoPostConfig."""
     set_clauses = []
     values = []
-    for key in ("autoScrapeOn", "autoPostOn", "postIntervalMin", "scrapeIntervalMin", "aiPromptRules"):
+    for key in (
+        "autoScrapeOn",
+        "autoPostOn",
+        "postIntervalMin",
+        "scrapeIntervalMin",
+        "aiPromptRules",
+    ):
         if key in data:
             set_clauses.append(f'"{key}" = %s')
             values.append(data[key])
@@ -146,7 +156,7 @@ def update_auto_config(data: dict) -> dict:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 f'UPDATE "AutoPostConfig" SET {", ".join(set_clauses)} WHERE id = 1 RETURNING *',
-                values
+                values,
             )
             conn.commit()
             row = cur.fetchone()
@@ -160,6 +170,7 @@ def update_auto_config(data: dict) -> dict:
 # Post helpers
 # ──────────────────────────────────────────────
 
+
 def get_all_posts() -> list[dict]:
     """Get all posts ordered by creation date descending."""
     with get_connection() as conn:
@@ -172,13 +183,11 @@ def get_posts_ready_to_publish() -> list[dict]:
     """Get posts with status SCHEDULED and scheduledAt <= now."""
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                '''SELECT * FROM "Post" 
+            cur.execute("""SELECT * FROM "Post" 
                    WHERE status = 'SCHEDULED' 
                    AND "scheduledAt" IS NOT NULL 
                    AND "scheduledAt" <= NOW()
-                   ORDER BY "scheduledAt" ASC'''
-            )
+                   ORDER BY "scheduledAt" ASC""")
             return [dict(row) for row in cur.fetchall()]
 
 
@@ -191,23 +200,29 @@ def get_post_by_id(post_id: int) -> Optional[dict]:
             return dict(row) if row else None
 
 
-def update_post_schedule(post_id: int, rewritten_text: Optional[str], scheduled_at: str, status: str, fb_post_id: str):
+def update_post_schedule(
+    post_id: int,
+    rewritten_text: Optional[str],
+    scheduled_at: str,
+    status: str,
+    fb_post_id: str,
+):
     """Update post details after scheduling it to Facebook."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             if rewritten_text is not None:
                 cur.execute(
-                    '''UPDATE "Post" 
+                    """UPDATE "Post" 
                        SET "rewrittenText" = %s, "scheduledAt" = %s, status = %s, "fbPostId" = %s, "updatedAt" = NOW() 
-                       WHERE id = %s''',
-                    (rewritten_text, scheduled_at, status, fb_post_id, post_id)
+                       WHERE id = %s""",
+                    (rewritten_text, scheduled_at, status, fb_post_id, post_id),
                 )
             else:
                 cur.execute(
-                    '''UPDATE "Post" 
+                    """UPDATE "Post" 
                        SET "scheduledAt" = %s, status = %s, "fbPostId" = %s, "updatedAt" = NOW() 
-                       WHERE id = %s''',
-                    (scheduled_at, status, fb_post_id, post_id)
+                       WHERE id = %s""",
+                    (scheduled_at, status, fb_post_id, post_id),
                 )
             conn.commit()
 
@@ -219,12 +234,12 @@ def update_post_status(post_id: int, status: str, fb_post_id: Optional[str] = No
             if fb_post_id:
                 cur.execute(
                     'UPDATE "Post" SET status = %s, "fbPostId" = %s, "updatedAt" = NOW() WHERE id = %s',
-                    (status, fb_post_id, post_id)
+                    (status, fb_post_id, post_id),
                 )
             else:
                 cur.execute(
                     'UPDATE "Post" SET status = %s, "updatedAt" = NOW() WHERE id = %s',
-                    (status, post_id)
+                    (status, post_id),
                 )
             conn.commit()
 
@@ -233,21 +248,23 @@ def insert_scraped_post(
     source_post_id: str,
     original_text: str,
     rewritten_text: str,
-    source_page_id: Optional[int] = None
+    source_page_id: Optional[int] = None,
 ) -> Optional[int]:
     """Insert a new scraped+rewritten post. Returns the new post id, or None if duplicate."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             # Check duplicate
-            cur.execute('SELECT id FROM "Post" WHERE "sourcePostId" = %s', (source_post_id,))
+            cur.execute(
+                'SELECT id FROM "Post" WHERE "sourcePostId" = %s', (source_post_id,)
+            )
             if cur.fetchone():
                 return None  # Already exists
 
             cur.execute(
-                '''INSERT INTO "Post" ("sourcePostId", "originalText", "rewrittenText", "status", "sourcePageId", "createdAt", "updatedAt")
+                """INSERT INTO "Post" ("sourcePostId", "originalText", "rewrittenText", "status", "sourcePageId", "createdAt", "updatedAt")
                    VALUES (%s, %s, %s, 'REWRITTEN', %s, NOW(), NOW())
-                   RETURNING id''',
-                (source_post_id, original_text, rewritten_text, source_page_id)
+                   RETURNING id""",
+                (source_post_id, original_text, rewritten_text, source_page_id),
             )
             conn.commit()
             row = cur.fetchone()
@@ -256,16 +273,17 @@ def insert_scraped_post(
 
 def create_custom_post(original_text: str, rewritten_text: str) -> dict:
     """Create a new custom post from the UI."""
-    import time
     import random
+    import time
+
     source_post_id = f"custom_gen_{int(time.time() * 1000)}_{random.randint(0, 999)}"
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                '''INSERT INTO "Post" ("sourcePostId", "originalText", "rewrittenText", "status", "createdAt", "updatedAt")
+                """INSERT INTO "Post" ("sourcePostId", "originalText", "rewrittenText", "status", "createdAt", "updatedAt")
                    VALUES (%s, %s, %s, 'REWRITTEN', NOW(), NOW())
-                   RETURNING *''',
-                (source_post_id, original_text, rewritten_text)
+                   RETURNING *""",
+                (source_post_id, original_text, rewritten_text),
             )
             conn.commit()
             return dict(cur.fetchone())
@@ -276,9 +294,9 @@ def update_post_rewritten_text(post_id: int, rewritten_text: str) -> dict:
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                '''UPDATE "Post" SET "rewrittenText" = %s, "updatedAt" = NOW()
-                   WHERE id = %s RETURNING *''',
-                (rewritten_text, post_id)
+                """UPDATE "Post" SET "rewrittenText" = %s, "updatedAt" = NOW()
+                   WHERE id = %s RETURNING *""",
+                (rewritten_text, post_id),
             )
             conn.commit()
             return dict(cur.fetchone())
@@ -302,21 +320,24 @@ def get_next_auto_schedule_time() -> str:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             # Get the latest scheduled/posted time
             cur.execute(
-                '''SELECT MAX("scheduledAt") as last_time FROM "Post" 
-                   WHERE status IN ('SCHEDULED', 'POSTED') AND "scheduledAt" IS NOT NULL'''
+                """SELECT MAX("scheduledAt") as last_time FROM "Post" 
+                   WHERE status IN ('SCHEDULED', 'POSTED') AND "scheduledAt" IS NOT NULL"""
             )
             row = cur.fetchone()
             last_time = row["last_time"] if row and row["last_time"] else None
 
             if last_time:
                 from datetime import timedelta
+
                 next_time = last_time + timedelta(minutes=interval_min)
                 # Make sure it's in the future
                 from datetime import datetime, timezone
+
                 now = datetime.now(timezone.utc)
                 if next_time < now:
                     next_time = now + timedelta(minutes=10)
                 return next_time.isoformat()
             else:
-                from datetime import datetime, timezone, timedelta
+                from datetime import datetime, timedelta, timezone
+
                 return (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
