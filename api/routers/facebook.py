@@ -16,6 +16,7 @@ class ScheduleRequest(BaseModel):
     postId: int
     scheduledTime: str
     rewrittenText: Optional[str] = None
+    imageUrl: Optional[str] = None
 
 
 @router.post("/schedule")
@@ -67,6 +68,7 @@ def schedule_facebook_post(req: ScheduleRequest):
             scheduled_at=req.scheduledTime,
             status="SCHEDULED",
             fb_post_id=fb_post_id,
+            image_url=req.imageUrl,
         )
 
         return {"success": True, "fbPostId": fb_post_id}

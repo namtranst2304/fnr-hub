@@ -172,10 +172,10 @@ def update_auto_config(data: dict) -> dict:
 
 
 def get_all_posts() -> list[dict]:
-    """Get all posts ordered by creation date descending."""
+    """Get all posts ordered by creation date descending, limited to 100 to prevent frontend crash."""
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute('SELECT * FROM "Post" ORDER BY "createdAt" DESC')
+            cur.execute('SELECT * FROM "Post" ORDER BY "createdAt" DESC LIMIT 100')
             return [dict(row) for row in cur.fetchall()]
 
 
@@ -206,24 +206,34 @@ def update_post_schedule(
     scheduled_at: str,
     status: str,
     fb_post_id: str,
+    image_url: Optional[str] = None,
 ):
     """Update post details after scheduling it to Facebook."""
     with get_connection() as conn:
         with conn.cursor() as cur:
+            updates = [
+                ('"scheduledAt" = %s', scheduled_at),
+                ('status = %s', status),
+                ('"fbPostId" = %s', fb_post_id),
+                ('"updatedAt" = NOW()', None)
+            ]
+            params = [scheduled_at, status, fb_post_id]
+
             if rewritten_text is not None:
-                cur.execute(
-                    """UPDATE "Post" 
-                       SET "rewrittenText" = %s, "scheduledAt" = %s, status = %s, "fbPostId" = %s, "updatedAt" = NOW() 
-                       WHERE id = %s""",
-                    (rewritten_text, scheduled_at, status, fb_post_id, post_id),
-                )
-            else:
-                cur.execute(
-                    """UPDATE "Post" 
-                       SET "scheduledAt" = %s, status = %s, "fbPostId" = %s, "updatedAt" = NOW() 
-                       WHERE id = %s""",
-                    (scheduled_at, status, fb_post_id, post_id),
-                )
+                updates.append(('"rewrittenText" = %s', rewritten_text))
+                params.append(rewritten_text)
+                
+            if image_url is not None:
+                updates.append(('"imageUrl" = %s', image_url))
+                params.append(image_url)
+
+            params.append(post_id)
+            set_clause = ", ".join([u[0] for u in updates])
+            
+            cur.execute(
+                f'UPDATE "Post" SET {set_clause} WHERE id = %s',
+                tuple(p for p in params if p is not None),
+            )
             conn.commit()
 
 

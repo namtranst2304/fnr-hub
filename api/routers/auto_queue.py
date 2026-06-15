@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api/auto-queue", tags=["AutoQueue"])
 class AutoQueueRequest(BaseModel):
     postId: int
     rewrittenText: Optional[str] = None
+    imageUrl: Optional[str] = None
 
 
 @router.post("")
@@ -31,18 +32,28 @@ def auto_queue_post(req: AutoQueueRequest):
 
         with get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Prepare updates
+                updates = [
+                    ('status = %s', "SCHEDULED"),
+                    ('"scheduledAt" = %s', next_time),
+                    ('"updatedAt" = NOW()', None)
+                ]
+                params = ["SCHEDULED", next_time]
+                
                 if req.rewrittenText:
-                    cur.execute(
-                        """UPDATE "Post" SET "rewrittenText" = %s, status = %s, "scheduledAt" = %s, "updatedAt" = NOW()
-                           WHERE id = %s RETURNING *""",
-                        (req.rewrittenText, "SCHEDULED", next_time, req.postId),
-                    )
-                else:
-                    cur.execute(
-                        """UPDATE "Post" SET status = %s, "scheduledAt" = %s, "updatedAt" = NOW()
-                           WHERE id = %s RETURNING *""",
-                        ("SCHEDULED", next_time, req.postId),
-                    )
+                    updates.append(('"rewrittenText" = %s', req.rewrittenText))
+                    params.append(req.rewrittenText)
+                    
+                if req.imageUrl:
+                    updates.append(('"imageUrl" = %s', req.imageUrl))
+                    params.append(req.imageUrl)
+                    
+                params.append(req.postId)
+                
+                set_clause = ", ".join([u[0] for u in updates])
+                query = f'UPDATE "Post" SET {set_clause} WHERE id = %s RETURNING *'
+                
+                cur.execute(query, tuple(p for p in params if p is not None))
                 post = cur.fetchone()
                 conn.commit()
 

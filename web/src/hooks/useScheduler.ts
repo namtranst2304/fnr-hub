@@ -178,7 +178,7 @@ export function useScheduler(initialPosts: Post[]) {
 
     setIsLoading(true);
     try {
-      const data = await schedulerApi.scheduleFbPost(selectedPost.id, new Date(scheduleTime).toISOString(), editedText);
+      const data = await schedulerApi.scheduleFbPost(selectedPost.id, new Date(scheduleTime).toISOString(), editedText, editedImageUrl);
 
       if (data.success) {
         toast.success(`Published to Facebook! Scheduled to post. ID: ${data.fbPostId}`);
@@ -187,7 +187,8 @@ export function useScheduler(initialPosts: Post[]) {
           status: 'SCHEDULED',
           scheduledAt: new Date(scheduleTime).toISOString(),
           rewrittenText: editedText,
-          fbPostId: data.fbPostId
+          fbPostId: data.fbPostId,
+          ...(editedImageUrl && { imageUrl: editedImageUrl })
         } : p));
         closeModal();
       } else {
@@ -206,7 +207,7 @@ export function useScheduler(initialPosts: Post[]) {
 
     setIsLoading(true);
     try {
-      const data = await schedulerApi.autoQueuePost(selectedPost.id, editedText);
+      const data = await schedulerApi.autoQueuePost(selectedPost.id, editedText, editedImageUrl);
 
       if (data.success) {
         const scheduledAt = data.scheduledAt;
@@ -217,6 +218,7 @@ export function useScheduler(initialPosts: Post[]) {
           status: 'SCHEDULED',
           scheduledAt: scheduledAt,
           rewrittenText: editedText,
+          ...(editedImageUrl && { imageUrl: editedImageUrl })
         } : p));
         closeModal();
       } else {

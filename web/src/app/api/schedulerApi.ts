@@ -98,19 +98,19 @@ export const schedulerApi = {
     const res = await fetch(`${API_ROUTES.POSTS}/${id}`, { method: 'DELETE' });
     return res.json();
   },
-  scheduleFbPost: async (postId: number, scheduledTime: string, rewrittenText: string) => {
+  scheduleFbPost: async (postId: number, scheduledTime: string, rewrittenText: string, imageUrl?: string) => {
     const res = await fetch(API_ROUTES.SCHEDULE_FB, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postId, scheduledTime, rewrittenText }),
+      body: JSON.stringify({ postId, scheduledTime, rewrittenText, imageUrl }),
     });
     return res.json();
   },
-  autoQueuePost: async (postId: number, rewrittenText: string) => {
+  autoQueuePost: async (postId: number, rewrittenText: string, imageUrl?: string) => {
     const res = await fetch(API_ROUTES.AUTO_QUEUE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postId, rewrittenText }),
+      body: JSON.stringify({ postId, rewrittenText, imageUrl }),
     });
     return res.json();
   },

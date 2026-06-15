@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Save, Trash2, Clock, Bot, ImageIcon, Loader2, ArrowLeft, Terminal, Check } from 'lucide-react';
-import { Post } from '@/types/scheduler';
+import { Post, AutoConfig } from '@/types/scheduler';
 import { schedulerApi } from '@/app/api/schedulerApi';
 import { getCyberImageForText } from './generator/imageHelper';
 import { CyberTerminalLogs } from './generator/CyberTerminalLogs';
@@ -23,7 +23,7 @@ interface EditorTabProps {
   handleDelete: () => void;
   handleSchedulePost: () => void;
   handleAutoQueue: () => void;
-  config: any;
+  config: AutoConfig;
 }
 
 export function EditorTab({
