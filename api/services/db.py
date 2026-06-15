@@ -262,7 +262,7 @@ def insert_scraped_post(
 
             cur.execute(
                 """INSERT INTO "Post" ("sourcePostId", "originalText", "rewrittenText", "status", "sourcePageId", "createdAt", "updatedAt")
-                   VALUES (%s, %s, %s, 'REWRITTEN', %s, NOW(), NOW())
+                   VALUES (%s, %s, %s, 'SCRAPED', %s, NOW(), NOW())
                    RETURNING id""",
                 (source_post_id, original_text, rewritten_text, source_page_id),
             )
@@ -281,7 +281,7 @@ def create_custom_post(original_text: str, rewritten_text: str) -> dict:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 """INSERT INTO "Post" ("sourcePostId", "originalText", "rewrittenText", "status", "createdAt", "updatedAt")
-                   VALUES (%s, %s, %s, 'REWRITTEN', NOW(), NOW())
+                   VALUES (%s, %s, %s, 'DRAFT', NOW(), NOW())
                    RETURNING *""",
                 (source_post_id, original_text, rewritten_text),
             )

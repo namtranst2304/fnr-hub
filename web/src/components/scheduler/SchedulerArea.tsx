@@ -6,12 +6,11 @@ import { useScheduler } from '@/hooks/useScheduler';
 import { TABS } from '@/lib/constants';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { PendingTab } from './tabs/PendingTab';
+import { RawTab } from './tabs/RawTab';
 import { ScheduledTab } from './tabs/ScheduledTab';
 import { SourcesTab } from './tabs/SourcesTab';
 import { SettingsTab } from './tabs/SettingsTab';
-import { GeneratorTab } from './tabs/GeneratorTab';
-import { EditorModal } from './modal/EditorModal';
+import { EditorTab } from './tabs/EditorTab';
 
 // ─── Component ────────────────────────────────────────────────
 
@@ -54,14 +53,16 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
     handleToggleConfig,
     handleUpdateInterval,
 
-    pendingPosts,
+    posts,
+    rawPosts,
     scheduledPosts,
     
     handleSaveDraft,
     handleDelete,
     handleSchedulePost,
     handleAutoQueue,
-    handleSaveCustomPost
+    handleSendToAI,
+    handlePushToScheduleDirect
   } = useScheduler(initialPosts);
 
 
@@ -98,7 +99,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
           {/* Tabs */}
           <div className="flex bg-black border border-zinc-800 p-1">
             {TABS.map(tab => {
-              const count = tab.key === 'pending' ? pendingPosts.length : 
+              const count = tab.key === 'raw' ? rawPosts.length : 
+                            tab.key === 'editor' ? posts.filter(p => p.status === 'DRAFT').length :
                             tab.key === 'scheduled' ? scheduledPosts.length : 
                             tab.key === 'sources' ? sources.length : undefined;
               return (
@@ -140,14 +142,40 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
             className="absolute inset-0 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-[#00f3ff]/30 scrollbar-track-transparent"
           >
 
-            {activeTab === 'pending' && (
-              <PendingTab
-                posts={pendingPosts}
+            {activeTab === 'raw' && (
+              <RawTab
+                posts={rawPosts}
                 scrapeUrl={scrapeUrl}
                 setScrapeUrl={setScrapeUrl}
                 isScraping={isScraping}
                 handleScrape={handleScrape}
-                openModal={openModal}
+                handleSendToAI={handleSendToAI}
+                handlePushToSchedule={handlePushToScheduleDirect}
+              />
+            )}
+
+            {/* ──── TAB: EDITOR ──── */}
+            {activeTab === 'editor' && (
+              <EditorTab
+                posts={posts}
+                selectedPost={selectedPost}
+                setSelectedPost={(post) => {
+                  if (post) {
+                    openModal(post);
+                  } else {
+                    closeModal();
+                  }
+                }}
+                editedText={editedText}
+                setEditedText={setEditedText}
+                scheduleTime={scheduleTime}
+                setScheduleTime={setScheduleTime}
+                isLoading={isLoading}
+                handleSaveDraft={handleSaveDraft}
+                handleDelete={handleDelete}
+                handleSchedulePost={handleSchedulePost}
+                handleAutoQueue={handleAutoQueue}
+                config={config}
               />
             )}
 
@@ -173,11 +201,6 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
               />
             )}
 
-            {/* ──── TAB: GENERATOR ──── */}
-            {activeTab === 'generator' && (
-              <GeneratorTab onSaveToPending={handleSaveCustomPost} />
-            )}
-
             {/* ──── TAB: SETTINGS ──── */}
             {activeTab === 'settings' && (
               <SettingsTab
@@ -193,21 +216,6 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
         </AnimatePresence>
       </div>
 
-      {/* ──── EDITOR MODAL OVERLAY ──── */}
-      <EditorModal
-        selectedPost={selectedPost}
-        editedText={editedText}
-        setEditedText={setEditedText}
-        scheduleTime={scheduleTime}
-        setScheduleTime={setScheduleTime}
-        isLoading={isLoading}
-        closeModal={closeModal}
-        handleSaveDraft={handleSaveDraft}
-        handleDelete={handleDelete}
-        handleSchedulePost={handleSchedulePost}
-        handleAutoQueue={handleAutoQueue}
-        config={config}
-      />
     </main>
   );
 }

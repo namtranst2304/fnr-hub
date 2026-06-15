@@ -14,9 +14,9 @@ export const API_ROUTES = {
 };
 
 export const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-  { key: 'pending', label: 'SYS.QUEUE', icon: <List className="w-4 h-4" /> },
-  { key: 'scheduled', label: 'CRON.JOBS', icon: <Terminal className="w-4 h-4" /> },
+  { key: 'raw', label: 'SYS.RAW_Q', icon: <List className="w-4 h-4" /> },
+  { key: 'editor', label: 'AI.WSPACE', icon: <Sparkles className="w-4 h-4" /> },
+  { key: 'scheduled', label: 'MEM.SCHED', icon: <Terminal className="w-4 h-4" /> },
   { key: 'sources', label: 'DATA.LINKS', icon: <Globe className="w-4 h-4" /> },
-  { key: 'generator', label: 'AI.GEN', icon: <Sparkles className="w-4 h-4" /> },
   { key: 'settings', label: 'CFG.CORE', icon: <Cpu className="w-4 h-4" /> },
 ];

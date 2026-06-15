@@ -29,4 +29,4 @@ export interface AutoConfig {
   aiPromptRules?: string;
 }
 
-export type TabKey = 'pending' | 'scheduled' | 'sources' | 'settings' | 'generator';
+export type TabKey = 'raw' | 'editor' | 'scheduled' | 'sources' | 'settings';

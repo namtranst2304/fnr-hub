@@ -84,6 +84,7 @@ export function SettingsTab({
   const [isSavingPrompt, setIsSavingPrompt] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalPrompt(config.aiPromptRules || '');
   }, [config.aiPromptRules]);
 

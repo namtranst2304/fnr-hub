@@ -12,7 +12,37 @@ export default async function SchedulerPage() {
     if (!res.ok) throw new Error('Failed to fetch posts');
     const data = await res.json();
     posts = data.posts || [];
-  } catch (error) {
+    
+    // Add mock data if empty for UI testing
+    if (posts.length === 0) {
+      posts = [
+        {
+          id: 999,
+          sourcePostId: "mock-123",
+          originalText: "Just had the most amazing coffee at the new downtown cafe! ☕ The latte art was insane and the ambiance is totally cyberpunk. Highly recommend checking it out if you're in the area! #coffee #cyberpunk #morningvibes",
+          rewrittenText: "This is a placeholder rewritten text.",
+          status: "SCRAPED",
+          scheduledAt: null,
+          fbPostId: null,
+          sourcePageId: null,
+          createdAt: new Date().toISOString(),
+          imageUrl: null
+        },
+        {
+          id: 1000,
+          sourcePostId: "mock-456",
+          originalText: "Tesla's new self-driving update is wild! It basically drove me from SF to San Jose with zero interventions. The future is literally now. What do you guys think about AI driving?",
+          rewrittenText: "This is a placeholder rewritten text.",
+          status: "DRAFT",
+          scheduledAt: null,
+          fbPostId: null,
+          sourcePageId: null,
+          createdAt: new Date().toISOString(),
+          imageUrl: null
+        }
+      ];
+    }
+  } catch {
     // Not using console.error here because Next.js Dev Overlay will catch it and show a red screen.
     // DB login error is due to user not configuring .env properly, automatically fallback to Mock Data.
     dbError = true;
@@ -24,7 +54,7 @@ export default async function SchedulerPage() {
         sourcePostId: "mock-123",
         originalText: "This is a placeholder original text.",
         rewrittenText: "Hello folks! This post was automatically rewritten by AI, ready to be scheduled! 😎🔥",
-        status: "REWRITTEN",
+        status: "SCRAPED",
         scheduledAt: null,
         fbPostId: null,
         sourcePageId: null,

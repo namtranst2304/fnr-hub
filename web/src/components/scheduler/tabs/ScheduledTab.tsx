@@ -31,7 +31,15 @@ export function ScheduledTab({ scheduledPosts }: ScheduledTabProps) {
                 T-{post.scheduledAt ? formatDate(post.scheduledAt, 'en-GB') : 'UNKNOWN'}
               </span>
             </div>
-            <p className="text-sm text-zinc-300 line-clamp-3 mb-3">{post.rewrittenText}</p>
+            <div className="flex gap-4 mb-3">
+              {post.imageUrl && (
+                <div className="w-16 h-16 shrink-0 border border-[#fce205]/30 overflow-hidden relative">
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(252,226,5,0.03)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-10" />
+                  <img src={post.imageUrl} alt="thumbnail" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <p className="text-sm text-zinc-300 line-clamp-3">{post.rewrittenText}</p>
+            </div>
             <p className="text-[10px] text-zinc-600">TRG_ID: {post.fbPostId || 'AWAITING_ALLOCATION'}</p>
           </div>
         ))}
@@ -50,7 +58,14 @@ export function ScheduledTab({ scheduledPosts }: ScheduledTabProps) {
         {postedPosts.map(post => (
           <div key={post.id} className="bg-black/40 p-4 border border-[#00f3ff]/20 opacity-70">
             <span className="text-[10px] text-[#00f3ff] mb-2 block tracking-widest">SUCCESS_OK</span>
-            <p className="text-xs text-zinc-400 line-clamp-2">{post.rewrittenText}</p>
+            <div className="flex gap-4">
+              {post.imageUrl && (
+                <div className="w-12 h-12 shrink-0 border border-[#00f3ff]/30 overflow-hidden relative">
+                  <img src={post.imageUrl} alt="thumbnail" className="w-full h-full object-cover grayscale opacity-80" />
+                </div>
+              )}
+              <p className="text-xs text-zinc-400 line-clamp-2 flex-1">{post.rewrittenText}</p>
+            </div>
           </div>
         ))}
 

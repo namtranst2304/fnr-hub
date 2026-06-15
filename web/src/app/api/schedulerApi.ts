@@ -86,6 +86,14 @@ export const schedulerApi = {
     });
     return res.json();
   },
+  updatePostStatus: async (id: number, status: string) => {
+    const res = await fetch(`${API_ROUTES.POSTS}/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    return res.json();
+  },
   deletePost: async (id: number) => {
     const res = await fetch(`${API_ROUTES.POSTS}/${id}`, { method: 'DELETE' });
     return res.json();

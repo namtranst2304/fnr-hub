@@ -3,12 +3,9 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from services.db import (
-    create_custom_post,
-    delete_post,
-    get_all_posts,
-    update_post_rewritten_text,
-)
+from services.db import (create_custom_post, delete_post, get_all_posts,
+                         get_post_by_id, update_post_rewritten_text,
+                         update_post_status)
 
 router = APIRouter(prefix="/api/v1/posts", tags=["Posts"])
 
@@ -20,6 +17,10 @@ class CreatePostRequest(BaseModel):
 
 class UpdatePostRequest(BaseModel):
     rewrittenText: str
+
+
+class UpdatePostStatusRequest(BaseModel):
+    status: str
 
 
 @router.get("")
@@ -47,6 +48,21 @@ def update_post(post_id: int, req: UpdatePostRequest):
     """Update a post's rewritten text."""
     try:
         post = update_post_rewritten_text(post_id, req.rewrittenText)
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+        return {"success": True, "post": post}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{post_id}/status")
+def update_status(post_id: int, req: UpdatePostStatusRequest):
+    """Update a post's status."""
+    try:
+        update_post_status(post_id, req.status)
+        post = get_post_by_id(post_id)
         if not post:
             raise HTTPException(status_code=404, detail="Post not found")
         return {"success": True, "post": post}

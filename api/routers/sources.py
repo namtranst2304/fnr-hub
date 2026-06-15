@@ -8,12 +8,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from services.db import (
-    create_source_page,
-    delete_source_page,
-    get_all_source_pages,
-    update_source_page,
-)
+from services.db import (create_source_page, delete_source_page,
+                         get_all_source_pages, update_source_page)
 
 router = APIRouter(prefix="/api/sources", tags=["Sources"])
 

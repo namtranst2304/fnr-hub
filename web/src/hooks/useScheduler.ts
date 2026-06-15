@@ -4,11 +4,11 @@ import { Post, SourcePage, AutoConfig, TabKey } from '../types/scheduler';
 import { schedulerApi } from '@/app/api/schedulerApi';
 
 export function useScheduler(initialPosts: Post[]) {
-  const [activeTab, setActiveTab] = useState<TabKey>('pending');
+  const [activeTab, setActiveTab] = useState<TabKey>('raw');
   const [direction, setDirection] = useState(0);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
 
-  const tabKeys: TabKey[] = ['pending', 'scheduled', 'sources', 'generator', 'settings'];
+  const tabKeys: TabKey[] = ['raw', 'editor', 'scheduled', 'sources', 'settings'];
   const changeTab = (newTab: TabKey) => {
     const oldIndex = tabKeys.indexOf(activeTab);
     const newIndex = tabKeys.indexOf(newTab);
@@ -44,7 +44,7 @@ export function useScheduler(initialPosts: Post[]) {
   const [schedulerRunning, setSchedulerRunning] = useState(false);
 
   // Derived data
-  const pendingPosts = posts.filter(p => p.status === 'DRAFT' || p.status === 'REWRITTEN');
+  const rawPosts = posts.filter(p => p.status === 'SCRAPED');
   const scheduledPosts = posts.filter(p => p.status === 'SCHEDULED' || p.status === 'POSTED' || p.status === 'FAILED');
 
   // ─── Data Fetching ────────────────────────────────────────
@@ -228,6 +228,47 @@ export function useScheduler(initialPosts: Post[]) {
     }
   };
 
+  const handleSendToAI = async (post: Post) => {
+    setIsLoading(true);
+    try {
+      const data = await schedulerApi.updatePostStatus(post.id, 'DRAFT');
+      if (data.success) {
+        setPosts(posts.map(p => p.id === post.id ? { ...p, status: 'DRAFT' } : p));
+        changeTab('editor');
+        setSelectedPost(post);
+        setEditedText(post.rewrittenText || post.originalText || '');
+        toast.success('Moved to AI Workspace!');
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error('Failed to move to AI: ' + message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePushToScheduleDirect = async (post: Post) => {
+    setIsLoading(true);
+    try {
+      const data = await schedulerApi.autoQueuePost(post.id, post.rewrittenText || post.originalText);
+      if (data.success) {
+        setPosts(posts.map(p => p.id === post.id ? {
+          ...p,
+          status: 'SCHEDULED',
+          scheduledAt: data.scheduledAt,
+        } : p));
+        changeTab('scheduled');
+        toast.success('Pushed to Schedule Queue!');
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error('Failed to schedule: ' + message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
   // ─── Source Actions ────────────────────────────────────────
 
   const handleAddSource = async () => {
@@ -363,13 +404,16 @@ export function useScheduler(initialPosts: Post[]) {
     handleToggleConfig,
     handleUpdateInterval,
 
-    pendingPosts,
+    posts,
+    rawPosts,
     scheduledPosts,
     
     handleSaveDraft,
     handleSaveCustomPost,
     handleDelete,
     handleSchedulePost,
-    handleAutoQueue
+    handleAutoQueue,
+    handleSendToAI,
+    handlePushToScheduleDirect
   };
 }
