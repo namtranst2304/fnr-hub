@@ -179,6 +179,38 @@ def get_all_posts() -> list[dict]:
             return [dict(row) for row in cur.fetchall()]
 
 
+def get_paginated_posts(statuses: tuple, limit: int, offset: int, search: str = "") -> dict:
+    """Get paginated posts with search and status filter."""
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            query_conds = []
+            params = []
+            
+            if statuses:
+                query_conds.append("status IN %s")
+                params.append(statuses)
+                
+            if search:
+                query_conds.append('("originalText" ILIKE %s OR "rewrittenText" ILIKE %s)')
+                search_term = f"%{search}%"
+                params.extend([search_term, search_term])
+                
+            where_clause = " AND ".join(query_conds) if query_conds else "1=1"
+            
+            # Get total count
+            cur.execute(f'SELECT COUNT(*) as total FROM "Post" WHERE {where_clause}', tuple(params))
+            total = cur.fetchone()['total']
+            
+            # Get data
+            params.extend([limit, offset])
+            # If scheduled statuses, order by scheduledAt, else createdAt
+            order_by = '"scheduledAt" DESC NULLS LAST, "createdAt" DESC' if 'SCHEDULED' in statuses else '"createdAt" DESC'
+            cur.execute(f'SELECT * FROM "Post" WHERE {where_clause} ORDER BY {order_by} LIMIT %s OFFSET %s', tuple(params))
+            posts = [dict(row) for row in cur.fetchall()]
+            
+            return {"posts": posts, "total": total}
+
+
 def get_posts_ready_to_publish() -> list[dict]:
     """Get posts with status SCHEDULED and scheduledAt <= now."""
     with get_connection() as conn:
@@ -330,12 +362,25 @@ def update_post_details(post_id: int, updates: dict) -> dict:
 
 
 def delete_post(post_id: int) -> bool:
-    """Delete a post by id. Returns True if a row was deleted."""
+    """Delete a post by ID."""
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute('DELETE FROM "Post" WHERE id = %s', (post_id,))
+            cur.execute('DELETE FROM "Post" WHERE id = %s RETURNING id', (post_id,))
+            deleted = cur.fetchone()
             conn.commit()
-            return cur.rowcount > 0
+            return bool(deleted)
+
+
+def bulk_delete_by_status(statuses: tuple) -> int:
+    """Delete all posts matching the given statuses."""
+    if not statuses:
+        return 0
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM "Post" WHERE status IN %s', (statuses,))
+            deleted_count = cur.rowcount
+            conn.commit()
+            return deleted_count
 
 
 def get_next_auto_schedule_time() -> str:

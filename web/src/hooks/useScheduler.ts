@@ -6,7 +6,11 @@ import { schedulerApi } from '@/app/api/schedulerApi';
 export function useScheduler(initialPosts: Post[]) {
   const [activeTab, setActiveTab] = useState<TabKey>('raw');
   const [direction, setDirection] = useState(0);
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [refreshKey, setRefreshKey] = useState(0);
+  
+  const triggerRefresh = useCallback(() => {
+    setRefreshKey(k => k + 1);
+  }, []);
 
   const tabKeys: TabKey[] = ['raw', 'editor', 'scheduled', 'sources', 'settings'];
   const changeTab = (newTab: TabKey) => {
@@ -44,9 +48,7 @@ export function useScheduler(initialPosts: Post[]) {
   const [isConfigLoading, setIsConfigLoading] = useState(false);
   const [schedulerRunning, setSchedulerRunning] = useState(false);
 
-  // Derived data
-  const rawPosts = posts.filter(p => p.status === 'SCRAPED');
-  const scheduledPosts = posts.filter(p => p.status === 'SCHEDULED' || p.status === 'POSTED' || p.status === 'FAILED');
+  // Note: Derived data (rawPosts, scheduledPosts) removed. Each tab fetches its own data.
 
   // ─── Data Fetching ────────────────────────────────────────
 
@@ -131,9 +133,9 @@ export function useScheduler(initialPosts: Post[]) {
     if (!selectedPost) return;
     setIsLoading(true);
     try {
-      const data = await schedulerApi.updatePost(selectedPost.id, { rewrittenText: editedText, ...(editedImageUrl && { imageUrl: editedImageUrl }) });
+      const data = await schedulerApi.updatePost(selectedPost.id, { rewrittenText: editedText, imageUrl: editedImageUrl });
       if (data.success) {
-        setPosts(posts.map(p => p.id === selectedPost.id ? { ...p, rewrittenText: editedText, ...(editedImageUrl && { imageUrl: editedImageUrl }) } : p));
+        triggerRefresh();
         toast.success("Draft saved successfully!");
         closeModal();
       } else {
@@ -155,7 +157,7 @@ export function useScheduler(initialPosts: Post[]) {
     try {
       const data = await schedulerApi.deletePost(selectedPost.id);
       if (data.success) {
-        setPosts(posts.filter(p => p.id !== selectedPost.id));
+        triggerRefresh();
         toast.success("Post removed from queue!");
         closeModal();
       } else {
@@ -182,14 +184,7 @@ export function useScheduler(initialPosts: Post[]) {
 
       if (data.success) {
         toast.success(`Published to Facebook! Scheduled to post. ID: ${data.fbPostId}`);
-        setPosts(posts.map(p => p.id === selectedPost.id ? {
-          ...p,
-          status: 'SCHEDULED',
-          scheduledAt: new Date(scheduleTime).toISOString(),
-          rewrittenText: editedText,
-          fbPostId: data.fbPostId,
-          ...(editedImageUrl && { imageUrl: editedImageUrl })
-        } : p));
+        triggerRefresh();
         closeModal();
       } else {
         toast.error(`Error: ${data.error}`);
@@ -213,13 +208,7 @@ export function useScheduler(initialPosts: Post[]) {
         const scheduledAt = data.scheduledAt;
         const formattedTime = new Date(scheduledAt).toLocaleString();
         toast.success(`Added to queue! Will post at: ${formattedTime}`);
-        setPosts(posts.map(p => p.id === selectedPost.id ? {
-          ...p,
-          status: 'SCHEDULED',
-          scheduledAt: scheduledAt,
-          rewrittenText: editedText,
-          ...(editedImageUrl && { imageUrl: editedImageUrl })
-        } : p));
+        triggerRefresh();
         closeModal();
       } else {
         toast.error(`Error: ${data.error || data.detail}`);
@@ -237,7 +226,7 @@ export function useScheduler(initialPosts: Post[]) {
     try {
       const data = await schedulerApi.updatePostStatus(post.id, 'DRAFT');
       if (data.success) {
-        setPosts(posts.map(p => p.id === post.id ? { ...p, status: 'DRAFT' } : p));
+        triggerRefresh();
         changeTab('editor');
         setSelectedPost(post);
         setEditedText(post.rewrittenText || post.originalText || '');
@@ -257,7 +246,7 @@ export function useScheduler(initialPosts: Post[]) {
     try {
       const data = await schedulerApi.updatePost(post.id, { rewrittenText: newText, ...(newImageUrl && { imageUrl: newImageUrl }) });
       if (data.success) {
-        setPosts(posts.map(p => p.id === post.id ? { ...p, rewrittenText: newText, ...(newImageUrl && { imageUrl: newImageUrl }) } : p));
+        triggerRefresh();
         toast.success("Schedule content updated successfully!");
       } else {
         toast.error("Error: " + data.error);
@@ -275,7 +264,7 @@ export function useScheduler(initialPosts: Post[]) {
     try {
       const data = await schedulerApi.updatePost(post.id, { originalText: newOriginalText, ...(newImageUrl && { imageUrl: newImageUrl }) });
       if (data.success) {
-        setPosts(posts.map(p => p.id === post.id ? { ...p, originalText: newOriginalText, ...(newImageUrl && { imageUrl: newImageUrl }) } : p));
+        triggerRefresh();
         toast.success("Raw content updated successfully!");
       } else {
         toast.error("Error: " + data.error);
@@ -293,11 +282,7 @@ export function useScheduler(initialPosts: Post[]) {
     try {
       const data = await schedulerApi.autoQueuePost(post.id, post.rewrittenText || post.originalText);
       if (data.success) {
-        setPosts(posts.map(p => p.id === post.id ? {
-          ...p,
-          status: 'SCHEDULED',
-          scheduledAt: data.scheduledAt,
-        } : p));
+        triggerRefresh();
         changeTab('scheduled');
         toast.success('Pushed to Schedule Queue!');
       }
@@ -354,7 +339,7 @@ export function useScheduler(initialPosts: Post[]) {
     try {
       const data = await schedulerApi.createPost(originalText, "");
       if (data.success && data.post) {
-        setPosts(prev => [data.post, ...prev]);
+        triggerRefresh();
         setSelectedPost(data.post);
         setEditedText("");
         toast.success('Custom Post Draft Created!');
@@ -449,9 +434,8 @@ export function useScheduler(initialPosts: Post[]) {
     handleToggleConfig,
     handleUpdateInterval,
 
-    posts,
-    rawPosts,
-    scheduledPosts,
+    refreshKey,
+    triggerRefresh,
     
     handleSaveDraft,
     handleCreateCustomPost,

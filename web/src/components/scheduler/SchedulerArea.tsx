@@ -149,7 +149,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
             {activeTab === 'raw' && (
               <RawTab
-                posts={rawPosts}
+                refreshKey={refreshKey}
+                triggerRefresh={triggerRefresh}
                 scrapeUrl={scrapeUrl}
                 setScrapeUrl={setScrapeUrl}
                 isScraping={isScraping}
@@ -163,7 +164,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
             {/* ──── TAB: EDITOR ──── */}
             {activeTab === 'editor' && (
               <EditorTab
-                posts={posts}
+                refreshKey={refreshKey}
+                triggerRefresh={triggerRefresh}
                 selectedPost={selectedPost}
                 setSelectedPost={(post) => {
                   if (post) {
@@ -191,7 +193,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
             {/* ──── TAB: SCHEDULED ──── */}
             {activeTab === 'scheduled' && (
               <ScheduledTab 
-                scheduledPosts={scheduledPosts} 
+                refreshKey={refreshKey}
+                triggerRefresh={triggerRefresh}
                 onUpdateScheduledPost={handleUpdateScheduledPost}
                 onCancelSchedule={handleSendToAI}
               />

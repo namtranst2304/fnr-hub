@@ -3,9 +3,14 @@ import { FileText, Terminal, ArrowRight, Check, X, Save, Edit3 } from 'lucide-re
 import { Post } from '@/types/scheduler';
 import { formatDate } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePaginatedPosts } from '@/hooks/usePaginatedPosts';
+import { groupPostsByDate, TabHeader, Pagination } from './TabUtils';
+import { schedulerApi } from '@/app/api/schedulerApi';
+import toast from 'react-hot-toast';
 
 interface RawTabProps {
-  posts: Post[];
+  refreshKey: number;
+  triggerRefresh: () => void;
   scrapeUrl: string;
   setScrapeUrl: (val: string) => void;
   isScraping: boolean;
@@ -16,7 +21,8 @@ interface RawTabProps {
 }
 
 export function RawTab({
-  posts,
+  refreshKey,
+  triggerRefresh,
   scrapeUrl,
   setScrapeUrl,
   isScraping,
@@ -28,6 +34,8 @@ export function RawTab({
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editedText, setEditedText] = useState('');
   const [editedImageUrl, setEditedImageUrl] = useState('');
+
+  const { posts, total, page, setPage, search, setSearch, isLoading, limit } = usePaginatedPosts('SCRAPED', refreshKey);
 
   const handleOpenModal = (post: Post) => {
     setSelectedPost(post);
@@ -41,6 +49,21 @@ export function RawTab({
       setSelectedPost(null);
     }
   };
+
+  const handleClearAll = async () => {
+    if (!confirm("Are you sure you want to delete ALL scraped posts?")) return;
+    try {
+      const data = await schedulerApi.clearPostsByStatus('SCRAPED');
+      if (data.success) {
+        toast.success(`Deleted ${data.deletedCount} posts!`);
+        triggerRefresh();
+      }
+    } catch (err: unknown) {
+      toast.error('Failed to clear posts');
+    }
+  };
+
+  const groupedPosts = groupPostsByDate(posts, 'createdAt');
 
   return (
     <>
@@ -63,6 +86,8 @@ export function RawTab({
           </button>
         </div>
 
+        <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isLoading} />
+
         {posts.length === 0 ? (
           <div className="text-center py-20 text-zinc-500 border border-zinc-800 bg-black/40">
             <Terminal className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
@@ -70,61 +95,73 @@ export function RawTab({
             <div className="mt-2 w-32 h-1 bg-zinc-800 mx-auto" />
           </div>
         ) : (
-          posts.map((post) => (
-            <div
-              key={post.id}
-              className="bg-black/60 p-5 border border-zinc-700 flex flex-col items-start gap-4 transition-all duration-300 ease-out group relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-1 h-full bg-zinc-700 group-hover:bg-[#ff00ff]" />
-              <div className="flex w-full items-start gap-4">
-                <div className="w-10 h-10 bg-zinc-900 flex items-center justify-center shrink-0 border border-zinc-700 group-hover:border-[#ff00ff]/50 group-hover:bg-[#ff00ff]/10 transition-colors duration-300 ease-out">
-                  <FileText className="w-5 h-5 text-zinc-400 group-hover:text-[#ff00ff]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="px-2 py-0.5 bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/30 text-[10px] font-bold tracking-widest">
-                      [{post.status}]
-                    </span>
-                    <span className="text-[10px] text-zinc-500 tracking-wider">SRC_ID: {post.sourcePostId}</span>
-                    <span className="text-[10px] text-zinc-500 tracking-wider">TS: {formatDate(post.createdAt)}</span>
-                  </div>
-                  <div className="flex gap-4">
-                    {post.imageUrl && (
-                      <div className="w-16 h-16 shrink-0 border border-[#ff00ff]/30 overflow-hidden relative">
-                        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,0,255,0.03)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-10" />
-                        <img src={post.imageUrl} alt="thumbnail" className="w-full h-full object-cover" />
+          <div>
+            {Object.entries(groupedPosts).map(([date, datePosts]) => (
+              <div key={date} className="mb-8">
+                <h2 className="text-[#ff00ff] font-bold uppercase tracking-widest border-b border-[#ff00ff]/20 pb-2 mb-4">
+                  {date}
+                </h2>
+                <div className="space-y-4">
+                  {datePosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="bg-black/60 p-5 border border-zinc-700 flex flex-col items-start gap-4 transition-all duration-300 ease-out group relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 left-0 w-1 h-full bg-zinc-700 group-hover:bg-[#ff00ff]" />
+                      <div className="flex w-full items-start gap-4">
+                        <div className="w-10 h-10 bg-zinc-900 flex items-center justify-center shrink-0 border border-zinc-700 group-hover:border-[#ff00ff]/50 group-hover:bg-[#ff00ff]/10 transition-colors duration-300 ease-out">
+                          <FileText className="w-5 h-5 text-zinc-400 group-hover:text-[#ff00ff]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="px-2 py-0.5 bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/30 text-[10px] font-bold tracking-widest">
+                              [{post.status}]
+                            </span>
+                            <span className="text-[10px] text-zinc-500 tracking-wider">SRC_ID: {post.sourcePostId}</span>
+                            <span className="text-[10px] text-zinc-500 tracking-wider">TS: {formatDate(post.createdAt)}</span>
+                          </div>
+                          <div className="flex gap-4">
+                            {post.imageUrl && (
+                              <div className="w-16 h-16 shrink-0 border border-[#ff00ff]/30 overflow-hidden relative">
+                                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,0,255,0.03)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-10" />
+                                <img src={post.imageUrl} alt="thumbnail" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <h3 className="text-zinc-300 font-medium text-sm leading-relaxed flex-1">
+                              {post.originalText.substring(0, 200)}...
+                            </h3>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <h3 className="text-zinc-300 font-medium text-sm leading-relaxed flex-1">
-                      {post.originalText.substring(0, 200)}...
-                    </h3>
-                  </div>
+                      <div className="flex w-full sm:w-auto items-center gap-2 mt-2 self-end">
+                        <button
+                          onClick={() => handleOpenModal(post)}
+                          className="flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-400 border border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          EDIT RAW
+                        </button>
+                        <button
+                          onClick={() => handlePushToSchedule(post)}
+                          className="flex items-center gap-2 px-3 py-1.5 text-xs text-blue-400 border border-blue-900/50 hover:bg-blue-900/20 transition-colors"
+                        >
+                          DIRECT POST
+                        </button>
+                        <button
+                          onClick={() => handleSendToAI(post)}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/30 hover:bg-[#ff00ff] hover:text-black font-medium transition-all duration-300 ease-out text-xs tracking-wider"
+                        >
+                          MOVE TO AI
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-4 w-full mt-2 justify-end border-t border-zinc-800 pt-4 flex-wrap">
-                <button
-                  onClick={() => handleOpenModal(post)}
-                  className="flex items-center gap-2 px-4 py-2 bg-transparent text-zinc-400 hover:text-[#ff00ff] text-xs font-bold uppercase tracking-widest transition-all duration-300 mr-auto"
-                >
-                  <Edit3 className="w-4 h-4" /> EDIT_RAW
-                </button>
-                <button
-                  onClick={() => handleSendToAI(post)}
-                  className="flex items-center gap-2 px-4 py-2 bg-black border border-[#00f3ff]/50 text-[#00f3ff] hover:bg-[#00f3ff]/20 hover:border-[#00f3ff] text-xs font-bold uppercase tracking-widest transition-all duration-300"
-                >
-                  SEND TO AI <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handlePushToSchedule(post)}
-                  className="flex items-center gap-2 px-4 py-2 bg-black border border-[#fce205]/50 text-[#fce205] hover:bg-[#fce205]/20 hover:border-[#fce205] text-xs font-bold uppercase tracking-widest transition-all duration-300"
-                >
-                  PUSH TO SCHEDULE <Check className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))
+            ))}
+            <Pagination page={page} setPage={setPage} total={total} limit={limit} />
+          </div>
         )}
       </div>
 

@@ -3,8 +3,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from services.db import (create_custom_post, delete_post, get_all_posts,
-                         get_post_by_id, update_post_details,
+from services.db import (bulk_delete_by_status, create_custom_post, delete_post,
+                         get_paginated_posts, get_post_by_id, update_post_details,
                          update_post_status)
 
 router = APIRouter(prefix="/api/v1/posts", tags=["Posts"])
@@ -25,12 +25,17 @@ class UpdatePostStatusRequest(BaseModel):
     status: str
 
 
+class BulkDeleteRequest(BaseModel):
+    statuses: str
+
 @router.get("")
-def list_posts():
-    """Get all posts."""
+def list_posts(status: str = "", page: int = 1, limit: int = 50, search: str = ""):
+    """Get paginated posts."""
     try:
-        posts = get_all_posts()
-        return {"success": True, "posts": posts}
+        offset = (page - 1) * limit
+        statuses = tuple(status.split(",")) if status else tuple()
+        result = get_paginated_posts(statuses, limit, offset, search)
+        return {"success": True, "posts": result["posts"], "total": result["total"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -85,5 +90,16 @@ def remove_post(post_id: int):
         return {"success": True}
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/bulk/status")
+def remove_bulk_posts(statuses: str):
+    """Bulk delete posts by status."""
+    try:
+        status_tuple = tuple(statuses.split(",")) if statuses else tuple()
+        deleted_count = bulk_delete_by_status(status_tuple)
+        return {"success": True, "deletedCount": deleted_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

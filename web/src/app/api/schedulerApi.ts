@@ -2,6 +2,16 @@ import { API_ROUTES } from '@/lib/constants';
 import { AutoConfig } from '@/types/scheduler';
 
 export const schedulerApi = {
+  fetchPosts: async (status: string = "", page: number = 1, limit: number = 50, search: string = "") => {
+    const params = new URLSearchParams({
+      status,
+      page: page.toString(),
+      limit: limit.toString(),
+      search
+    });
+    const res = await fetch(`${API_ROUTES.POSTS}?${params.toString()}`, { cache: 'no-store' });
+    return res.json();
+  },
   fetchSources: async () => {
     const res = await fetch(API_ROUTES.SOURCES);
     return res.json();
@@ -111,6 +121,13 @@ export const schedulerApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ postId, rewrittenText, imageUrl }),
+    });
+    return res.json();
+  },
+  clearPostsByStatus: async (statuses: string) => {
+    const params = new URLSearchParams({ statuses });
+    const res = await fetch(`${API_ROUTES.POSTS}/bulk/status?${params.toString()}`, {
+      method: 'DELETE'
     });
     return res.json();
   },

@@ -1,23 +1,26 @@
 import { useState } from 'react';
-import { Clock, CheckCircle2, X, Save, ArrowLeft } from 'lucide-react';
+import { Clock, CheckCircle2, X, Save, ArrowLeft, Trash2, CalendarClock } from 'lucide-react';
 import { Post } from '@/types/scheduler';
 import { formatDate } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePaginatedPosts } from '@/hooks/usePaginatedPosts';
+import { groupPostsByDate, TabHeader, Pagination } from './TabUtils';
+import { schedulerApi } from '@/app/api/schedulerApi';
+import toast from 'react-hot-toast';
 
 interface ScheduledTabProps {
-  scheduledPosts: Post[];
+  refreshKey: number;
+  triggerRefresh: () => void;
   onUpdateScheduledPost?: (post: Post, newText: string, newImageUrl?: string) => Promise<void>;
   onCancelSchedule?: (post: Post) => Promise<void>;
 }
 
-export function ScheduledTab({ scheduledPosts, onUpdateScheduledPost, onCancelSchedule }: ScheduledTabProps) {
+export function ScheduledTab({ refreshKey, triggerRefresh, onUpdateScheduledPost, onCancelSchedule }: ScheduledTabProps) {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editedText, setEditedText] = useState('');
   const [editedImageUrl, setEditedImageUrl] = useState('');
 
-  const pendingExecPosts = scheduledPosts.filter(p => p.status === 'SCHEDULED');
-  const postedPosts = scheduledPosts.filter(p => p.status === 'POSTED');
-  const failedPosts = scheduledPosts.filter(p => p.status === 'FAILED');
+  const { posts, total, page, setPage, search, setSearch, isLoading, limit } = usePaginatedPosts('SCHEDULED,POSTED,FAILED', refreshKey);
 
   const handleOpenModal = (post: Post) => {
     setSelectedPost(post);
@@ -39,81 +42,126 @@ export function ScheduledTab({ scheduledPosts, onUpdateScheduledPost, onCancelSc
     }
   };
 
+  const handleDelete = async (post: Post) => {
+    if (!confirm("Are you sure you want to delete this post permanently?")) return;
+    try {
+      const data = await schedulerApi.deletePost(post.id);
+      if (data.success) {
+        toast.success("Post deleted!");
+        triggerRefresh();
+      }
+    } catch (err: unknown) {
+      toast.error("Failed to delete post");
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!confirm("Are you sure you want to delete ALL Scheduled/Posted/Failed posts?")) return;
+    try {
+      const data = await schedulerApi.clearPostsByStatus('SCHEDULED,POSTED,FAILED');
+      if (data.success) {
+        toast.success(`Deleted ${data.deletedCount} posts!`);
+        triggerRefresh();
+      }
+    } catch (err: unknown) {
+      toast.error('Failed to clear posts');
+    }
+  };
+
+  const groupedPosts = groupPostsByDate(posts, 'scheduledAt');
+
   return (
     <>
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 relative">
-        {/* Pending Execution */}
-        <div className="space-y-4 relative">
-          <div className="absolute top-0 -left-4 w-1 h-full bg-[#fce205]/20 hidden lg:block" />
-          <h2 className="font-bold text-[#fce205] text-lg uppercase tracking-widest flex items-center gap-2 mb-6">
-            <Clock className="w-5 h-5" /> MEMORY.SCHEDULED
-          </h2>
-          {pendingExecPosts.length === 0 && (
-            <p className="text-zinc-600 text-sm italic">NO_PROCESSES_FOUND</p>
-          )}
-          {pendingExecPosts.map(post => (
-            <div 
-              key={post.id} 
-              onClick={() => handleOpenModal(post)}
-              className="bg-black/60 p-5 border border-[#fce205]/30 shadow-[0_0_10px_rgba(252,226,5,0.05)] relative overflow-hidden group cursor-pointer hover:border-[#fce205]/80 hover:bg-black/80 transition-all duration-300 ease-out"
-            >
-              <div className="absolute top-0 left-0 w-full h-0.5 bg-[#fce205] group-hover:shadow-[0_0_8px_#fce205]" />
-              <div className="flex justify-between items-start mb-3">
-                <span className="px-2 py-0.5 bg-[#fce205]/20 text-[#fce205] text-[10px] font-bold tracking-widest border border-[#fce205]/40">PENDING_EXEC</span>
-                <span className="text-xs text-[#00f3ff] bg-[#00f3ff]/10 px-2 py-1 border border-[#00f3ff]/20">
-                  T-{post.scheduledAt ? formatDate(post.scheduledAt, 'en-GB') : 'UNKNOWN'}
-                </span>
-              </div>
-              <div className="flex gap-4 mb-3">
-                {post.imageUrl && (
-                  <div className="w-16 h-16 shrink-0 border border-[#fce205]/30 overflow-hidden relative">
-                    <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(252,226,5,0.03)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-10" />
-                    <img src={post.imageUrl} alt="thumbnail" className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <p className="text-sm text-zinc-300 line-clamp-3">{post.rewrittenText}</p>
-              </div>
-              <div className="flex justify-between items-end">
-                <p className="text-[10px] text-zinc-600">TRG_ID: {post.fbPostId || 'AWAITING_ALLOCATION'}</p>
-                <span className="text-[10px] text-[#fce205] opacity-0 group-hover:opacity-100 transition-opacity font-bold flex items-center gap-1">
-                  EDIT <ArrowLeft className="w-3 h-3 rotate-180" />
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="max-w-6xl mx-auto">
+        <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isLoading} />
 
-        {/* Posted & Failed */}
-        <div className="space-y-4 relative">
-          <div className="absolute top-0 -left-4 w-1 h-full bg-[#00f3ff]/20 hidden lg:block" />
-          <h2 className="font-bold text-[#00f3ff] text-lg uppercase tracking-widest flex items-center gap-2 mb-6">
-            <CheckCircle2 className="w-5 h-5" /> MEMORY.POSTED
-          </h2>
-          {postedPosts.length === 0 && failedPosts.length === 0 && (
-            <p className="text-zinc-600 text-sm italic">NO_LOGS_FOUND</p>
-          )}
-          
-          {postedPosts.map(post => (
-            <div key={post.id} className="bg-black/40 p-4 border border-[#00f3ff]/20 opacity-70">
-              <span className="text-[10px] text-[#00f3ff] mb-2 block tracking-widest">SUCCESS_OK</span>
-              <div className="flex gap-4">
-                {post.imageUrl && (
-                  <div className="w-12 h-12 shrink-0 border border-[#00f3ff]/30 overflow-hidden relative">
-                    <img src={post.imageUrl} alt="thumbnail" className="w-full h-full object-cover grayscale opacity-80" />
-                  </div>
-                )}
-                <p className="text-xs text-zinc-400 line-clamp-2 flex-1">{post.rewrittenText}</p>
-              </div>
-            </div>
-          ))}
+        {posts.length === 0 ? (
+          <div className="text-center py-20 text-zinc-500 border border-zinc-800 bg-black/40">
+            <CalendarClock className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
+            <p className="text-lg font-medium tracking-widest uppercase">SCHEDULE_QUEUE_EMPTY</p>
+            <div className="mt-2 w-32 h-1 bg-zinc-800 mx-auto" />
+          </div>
+        ) : (
+          <div>
+            {Object.entries(groupedPosts).map(([date, datePosts]) => (
+              <div key={date} className="mb-8">
+                <h3 className="text-[#fce205] font-bold uppercase tracking-widest border-b border-[#fce205]/20 pb-2 mb-4">
+                  {date}
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {datePosts.map((post) => {
+                    const isPending = post.status === 'SCHEDULED';
+                    const isSuccess = post.status === 'POSTED';
+                    const isFail = post.status === 'FAILED';
+                    
+                    const borderColor = isPending ? 'border-[#fce205]/30' : isSuccess ? 'border-[#00f3ff]/30' : 'border-[#ff0000]/40';
+                    const hoverBorderColor = isPending ? 'hover:border-[#fce205]/80' : isSuccess ? 'hover:border-[#00f3ff]/80' : 'hover:border-[#ff0000]/80';
+                    const bgClass = isPending ? 'bg-black/60' : isSuccess ? 'bg-black/40 opacity-80' : 'bg-[#ff0000]/10';
 
-          {failedPosts.map(post => (
-            <div key={post.id} className="bg-[#ff0000]/10 p-4 border border-[#ff0000]/40 shadow-[0_0_10px_rgba(255,0,0,0.1)]">
-              <span className="text-[10px] text-[#ff0000] font-bold mb-2 block tracking-widest animate-pulse">ERR_FATAL</span>
-              <p className="text-xs text-[#ff0000]/80 line-clamp-2">{post.rewrittenText}</p>
-            </div>
-          ))}
-        </div>
+                    return (
+                      <div 
+                        key={post.id} 
+                        className={`${bgClass} p-5 border ${borderColor} shadow-lg relative overflow-hidden group ${hoverBorderColor} transition-all duration-300 ease-out`}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <span className={`px-2 py-0.5 text-[10px] font-bold tracking-widest border ${
+                            isPending ? 'bg-[#fce205]/20 text-[#fce205] border-[#fce205]/40' :
+                            isSuccess ? 'bg-[#00f3ff]/20 text-[#00f3ff] border-[#00f3ff]/40' :
+                            'bg-[#ff0000]/20 text-[#ff0000] border-[#ff0000]/40 animate-pulse'
+                          }`}>
+                            {post.status}
+                          </span>
+                          <span className="text-xs text-zinc-400 bg-zinc-900 px-2 py-1 border border-zinc-800">
+                            {post.scheduledAt ? formatDate(post.scheduledAt, 'en-GB') : 'UNKNOWN'}
+                          </span>
+                        </div>
+                        
+                        <div className="flex gap-4 mb-3">
+                          {post.imageUrl && (
+                            <div className={`w-16 h-16 shrink-0 border ${borderColor} overflow-hidden relative`}>
+                              <img src={post.imageUrl} alt="thumbnail" className={`w-full h-full object-cover ${!isPending ? 'grayscale' : ''}`} />
+                            </div>
+                          )}
+                          <p className="text-sm text-zinc-300 line-clamp-3 flex-1">{post.rewrittenText}</p>
+                        </div>
+                        
+                        <div className="flex justify-between items-end mt-4 pt-4 border-t border-zinc-800/50">
+                          <p className="text-[10px] text-zinc-600">TRG_ID: {post.fbPostId || 'N/A'}</p>
+                          
+                          <div className="flex gap-2">
+                            {isPending && (
+                              <>
+                                <button
+                                  onClick={() => handleOpenModal(post)}
+                                  className="text-[10px] text-[#fce205] hover:bg-[#fce205]/20 px-2 py-1 font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  EDIT <ArrowLeft className="w-3 h-3 rotate-180" />
+                                </button>
+                                <button
+                                  onClick={() => { setSelectedPost(post); handleCancel(); }}
+                                  className="text-[10px] text-orange-400 hover:bg-orange-400/20 px-2 py-1 font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  CANCEL/BACK TO AI
+                                </button>
+                              </>
+                            )}
+                            <button
+                              onClick={() => handleDelete(post)}
+                              className="text-[10px] text-red-500 hover:bg-red-500/20 px-2 py-1 font-bold flex items-center gap-1 transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" /> DELETE
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <Pagination page={page} setPage={setPage} total={total} limit={limit} />
+          </div>
+        )}
       </div>
 
       {/* ─── MODAL EDIT ─── */}

@@ -6,9 +6,13 @@ import { getCyberImageForText } from './generator/imageHelper';
 import { CyberTerminalLogs } from './generator/CyberTerminalLogs';
 import { CyberImageTerminalLogs } from './generator/CyberImageTerminalLogs';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePaginatedPosts } from '@/hooks/usePaginatedPosts';
+import { groupPostsByDate, TabHeader, Pagination } from './TabUtils';
+import toast from 'react-hot-toast';
 
 interface EditorTabProps {
-  posts: Post[];
+  refreshKey: number;
+  triggerRefresh: () => void;
   selectedPost: Post | null;
   setSelectedPost: (post: Post | null) => void;
   handleCreateCustomPost: (originalText: string) => Promise<void>;
@@ -49,7 +53,7 @@ export function EditorTab({
   const [customIdea, setCustomIdea] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
-  const draftPosts = posts.filter(p => p.status === 'DRAFT');
+  const { posts, total, page, setPage, search, setSearch, isLoading: isFetching, limit } = usePaginatedPosts('DRAFT', refreshKey);
 
   React.useEffect(() => {
     if (selectedPost) {
@@ -103,6 +107,21 @@ export function EditorTab({
     setIsCreating(false);
   };
 
+  const handleClearAll = async () => {
+    if (!confirm("Are you sure you want to delete ALL drafts?")) return;
+    try {
+      const data = await schedulerApi.clearPostsByStatus('DRAFT');
+      if (data.success) {
+        toast.success(`Deleted ${data.deletedCount} drafts!`);
+        triggerRefresh();
+      }
+    } catch (err: unknown) {
+      toast.error('Failed to clear drafts');
+    }
+  };
+
+  const groupedPosts = groupPostsByDate(posts, 'createdAt');
+
   // View: List of Drafts
   if (!selectedPost) {
     return (
@@ -135,30 +154,44 @@ export function EditorTab({
           <h2 className="text-[#00f3ff] font-bold tracking-widest uppercase mb-4 flex items-center gap-2">
             <Terminal className="w-5 h-5" /> AI WORKSPACE - PENDING DRAFTS
           </h2>
-        {draftPosts.length === 0 ? (
+          <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isFetching} />
+
+        {posts.length === 0 ? (
           <div className="text-center py-20 text-zinc-500 border border-zinc-800 bg-black/40">
             <Terminal className="w-16 h-16 mx-auto mb-4 text-zinc-700" />
             <p className="text-lg font-medium tracking-widest uppercase">NO_DRAFTS_FOUND</p>
             <div className="mt-2 w-32 h-1 bg-zinc-800 mx-auto" />
           </div>
         ) : (
-          draftPosts.map((post) => (
-            <div
-              key={post.id}
-              onClick={() => setSelectedPost(post)}
-              className="bg-black/60 p-5 border border-zinc-700 hover:border-[#00f3ff] hover:shadow-[0_0_15px_rgba(0,243,255,0.2)] flex items-start gap-4 cursor-pointer transition-all duration-300 ease-out group relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-1 h-full bg-zinc-700 group-hover:bg-[#00f3ff]" />
-              <div className="flex-1 min-w-0">
-                <h3 className="text-zinc-300 font-medium text-sm leading-relaxed group-hover:text-white">
-                  {post.rewrittenText ? post.rewrittenText.substring(0, 150) : post.originalText.substring(0, 150)}...
+          <div>
+            {Object.entries(groupedPosts).map(([date, datePosts]) => (
+              <div key={date} className="mb-8">
+                <h3 className="text-[#00f3ff] font-bold uppercase tracking-widest border-b border-[#00f3ff]/20 pb-2 mb-4">
+                  {date}
                 </h3>
+                <div className="space-y-4">
+                  {datePosts.map((post) => (
+                    <div
+                      key={post.id}
+                      onClick={() => setSelectedPost(post)}
+                      className="bg-black/60 p-5 border border-zinc-700 hover:border-[#00f3ff] hover:shadow-[0_0_15px_rgba(0,243,255,0.2)] flex items-start gap-4 cursor-pointer transition-all duration-300 ease-out group relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 left-0 w-1 h-full bg-zinc-700 group-hover:bg-[#00f3ff]" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-zinc-300 font-medium text-sm leading-relaxed group-hover:text-white">
+                          {post.rewrittenText ? post.rewrittenText.substring(0, 150) : post.originalText.substring(0, 150)}...
+                        </h3>
+                      </div>
+                      <div className="shrink-0 pl-4 text-[#00f3ff] font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1">
+                        EDIT <ArrowLeft className="w-3 h-3 rotate-180" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="shrink-0 pl-4 text-[#00f3ff] font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1">
-                EDIT <ArrowLeft className="w-3 h-3 rotate-180" />
-              </div>
-            </div>
-          ))
+            ))}
+            <Pagination page={page} setPage={setPage} total={total} limit={limit} />
+          </div>
         )}
         </div>
       </div>
