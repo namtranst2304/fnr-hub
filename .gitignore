@@ -1,6 +1,13 @@
-# Node
+# Node & Dependencies
 node_modules/
 dist/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # Next.js
 .next/
@@ -27,6 +34,7 @@ venv.bak/
 .env.development.local
 .env.test.local
 .env.production.local
+.env*
 
 # OS
 .DS_Store
@@ -36,5 +44,16 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Docker
+# Debug Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Vercel
+.vercel
+
+# Misc
+*.pem
 docker-compose.override.yml
+/src/generated/prisma

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePaginatedPosts } from '@/hooks/usePaginatedPosts';
 import { groupPostsByDate, TabHeader, Pagination } from './TabUtils';
 import { PostCard } from './PostCard';
+import { useConfirm } from '@/components/ui/ConfirmModal';
 import { schedulerApi } from '@/app/api/schedulerApi';
 import toast from 'react-hot-toast';
 
@@ -34,6 +35,8 @@ export function RawQueueTab({
 }: RawTabProps) {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editedText, setEditedText] = useState('');
+  const [isClearing, setIsClearing] = useState(false);
+  const confirm = useConfirm();
   const [editedImageUrl, setEditedImageUrl] = useState('');
 
   const { posts, total, page, setPage, search, setSearch, isLoading, limit } = usePaginatedPosts('SCRAPED', refreshKey);
@@ -52,16 +55,25 @@ export function RawQueueTab({
   };
 
   const handleClearAll = async () => {
-    if (!confirm("Are you sure you want to delete ALL scraped posts?")) return;
-    try {
-      const data = await schedulerApi.clearPostsByStatus('SCRAPED');
-      if (data.success) {
-        toast.success(`Deleted ${data.deletedCount} posts!`);
-        triggerRefresh();
+    confirm({
+      title: 'SYS.CLEAR_RAW',
+      message: 'Are you sure you want to delete ALL scraped posts? This action cannot be undone.',
+      danger: true,
+      onConfirm: async () => {
+        setIsClearing(true);
+        try {
+          const res = await schedulerApi.clearPostsByStatus("SCRAPED");
+          if (res.success) {
+            toast.success(`Cleared ${res.deletedCount} posts!`);
+            triggerRefresh();
+          }
+        } catch (err: unknown) {
+          toast.error("Failed to clear posts: " + (err instanceof Error ? err.message : String(err)));
+        } finally {
+          setIsClearing(false);
+        }
       }
-    } catch {
-      toast.error('Failed to clear posts');
-    }
+    });
   };
 
   const groupedPosts = groupPostsByDate(posts, 'createdAt');
@@ -87,7 +99,7 @@ export function RawQueueTab({
           </button>
         </div>
 
-        <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isLoading} />
+        <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isLoading || isClearing} />
 
         {posts.length === 0 ? (
           <div className="text-center py-20 text-zinc-500 border border-zinc-800 bg-black/40">

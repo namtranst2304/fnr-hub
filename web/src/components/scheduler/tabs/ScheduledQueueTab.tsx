@@ -8,6 +8,7 @@ import { groupPostsByDate, TabHeader, Pagination } from './TabUtils';
 import { PostCard, PostCardTheme } from './PostCard';
 import { schedulerApi } from '@/app/api/schedulerApi';
 import toast from 'react-hot-toast';
+import { useConfirm } from '@/components/ui/ConfirmModal';
 
 interface ScheduledTabProps {
   refreshKey: number;
@@ -20,6 +21,8 @@ export function ScheduledQueueTab({ refreshKey, triggerRefresh, onUpdateSchedule
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editedText, setEditedText] = useState('');
   const [editedImageUrl, setEditedImageUrl] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const confirm = useConfirm();
 
   const { posts, total, page, setPage, search, setSearch, isLoading, limit } = usePaginatedPosts('SCHEDULED,POSTED,FAILED', refreshKey);
 
@@ -44,29 +47,47 @@ export function ScheduledQueueTab({ refreshKey, triggerRefresh, onUpdateSchedule
   };
 
   const handleDelete = async (post: Post) => {
-    if (!confirm("Are you sure you want to delete this post permanently?")) return;
-    try {
-      const data = await schedulerApi.deletePost(post.id);
-      if (data.success) {
-        toast.success("Post deleted!");
-        triggerRefresh();
+    confirm({
+      title: 'SYS.PURGE_POST',
+      message: 'Are you sure you want to delete this post permanently? This action cannot be undone.',
+      danger: true,
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          const data = await schedulerApi.deletePost(post.id);
+          if (data.success) {
+            toast.success("Post deleted permanently!");
+            triggerRefresh();
+          }
+        } catch (err: unknown) {
+          toast.error("Failed to delete post");
+        } finally {
+          setIsDeleting(false);
+        }
       }
-    } catch {
-      toast.error("Failed to delete post");
-    }
+    });
   };
 
   const handleClearAll = async () => {
-    if (!confirm("Are you sure you want to delete ALL Scheduled/Posted/Failed posts?")) return;
-    try {
-      const data = await schedulerApi.clearPostsByStatus('SCHEDULED,POSTED,FAILED');
-      if (data.success) {
-        toast.success(`Deleted ${data.deletedCount} posts!`);
-        triggerRefresh();
+    confirm({
+      title: 'SYS.CLEAR_SCHEDULED',
+      message: 'Are you sure you want to delete ALL Scheduled/Posted/Failed posts? This action cannot be undone.',
+      danger: true,
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          const data = await schedulerApi.clearPostsByStatus('SCHEDULED,POSTED,FAILED');
+          if (data.success) {
+            toast.success(`Deleted ${data.deletedCount} posts!`);
+            triggerRefresh();
+          }
+        } catch {
+          toast.error('Failed to clear posts');
+        } finally {
+          setIsDeleting(false);
+        }
       }
-    } catch {
-      toast.error('Failed to clear posts');
-    }
+    });
   };
 
   const groupedPosts = groupPostsByDate(posts, 'scheduledAt');
@@ -74,7 +95,7 @@ export function ScheduledQueueTab({ refreshKey, triggerRefresh, onUpdateSchedule
   return (
     <>
       <div className="max-w-6xl mx-auto">
-        <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isLoading} />
+        <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isLoading || isDeleting} />
 
         {posts.length === 0 ? (
           <div className="text-center py-20 text-zinc-500 border border-zinc-800 bg-black/40">

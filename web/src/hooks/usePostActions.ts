@@ -2,6 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Post, TabKey } from '@/types/scheduler';
 import { schedulerApi } from '@/app/api/schedulerApi';
+import { useConfirm } from '@/components/ui/ConfirmModal';
 
 export function usePostActions(
   triggerRefresh: () => void,
@@ -13,6 +14,7 @@ export function usePostActions(
   const [editedImageUrl, setEditedImageUrl] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const confirm = useConfirm();
 
   const openModal = (post: Post) => {
     setSelectedPost(post);
@@ -56,24 +58,30 @@ export function usePostActions(
   const handleDelete = async (postOverride?: Post) => {
     const postToDelete = postOverride || selectedPost;
     if (!postToDelete) return;
-    if (!confirm("Are you sure you want to delete this post?")) return;
-
-    setIsLoading(true);
-    try {
-      const data = await schedulerApi.deletePost(postToDelete.id);
-      if (data.success) {
-        triggerRefresh();
-        toast.success("Post removed from queue!");
-        if (selectedPost && selectedPost.id === postToDelete.id) closeModal();
-      } else {
-        toast.error("Error: " + data.error);
+    
+    confirm({
+      title: 'SYS.PURGE_POST',
+      message: 'Are you sure you want to delete this post? This action cannot be undone.',
+      danger: true,
+      onConfirm: async () => {
+        setIsLoading(true);
+        try {
+          const data = await schedulerApi.deletePost(postToDelete.id);
+          if (data.success) {
+            triggerRefresh();
+            toast.success("Post removed from queue!");
+            if (selectedPost && selectedPost.id === postToDelete.id) closeModal();
+          } else {
+            toast.error("Error: " + data.error);
+          }
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          toast.error("Server Error: " + message);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      toast.error("Server Error: " + message);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const handleSchedulePost = async () => {

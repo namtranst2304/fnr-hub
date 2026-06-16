@@ -10,6 +10,7 @@ import { usePaginatedPosts } from '@/hooks/usePaginatedPosts';
 import { groupPostsByDate, TabHeader, Pagination } from './TabUtils';
 import { PostCard } from './PostCard';
 import toast from 'react-hot-toast';
+import { useConfirm } from '@/components/ui/ConfirmModal';
 
 interface EditorTabProps {
   refreshKey: number;
@@ -50,6 +51,8 @@ export function AiWorkspaceTab({
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [customIdea, setCustomIdea] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const confirm = useConfirm();
 
   const { posts, total, page, setPage, search, setSearch, isLoading: isFetching, limit } = usePaginatedPosts('DRAFT', refreshKey);
 
@@ -105,16 +108,25 @@ export function AiWorkspaceTab({
   };
 
   const handleClearAll = async () => {
-    if (!confirm("Are you sure you want to delete ALL drafts?")) return;
-    try {
-      const data = await schedulerApi.clearPostsByStatus('DRAFT');
-      if (data.success) {
-        toast.success(`Deleted ${data.deletedCount} drafts!`);
-        triggerRefresh();
+    confirm({
+      title: 'SYS.CLEAR_DRAFTS',
+      message: 'Are you sure you want to delete ALL drafts? This action cannot be undone.',
+      danger: true,
+      onConfirm: async () => {
+        setIsClearing(true);
+        try {
+          const res = await schedulerApi.clearPostsByStatus("DRAFT");
+          if (res.success) {
+            toast.success(`Cleared ${res.deletedCount} drafts!`);
+            triggerRefresh();
+          }
+        } catch (err: unknown) {
+          toast.error("Failed to clear drafts: " + (err instanceof Error ? err.message : String(err)));
+        } finally {
+          setIsClearing(false);
+        }
       }
-    } catch {
-      toast.error('Failed to clear drafts');
-    }
+    });
   };
 
   const groupedPosts = groupPostsByDate(posts, 'createdAt');
@@ -151,7 +163,7 @@ export function AiWorkspaceTab({
           <h2 className="text-[#00f3ff] font-bold tracking-widest uppercase mb-4 flex items-center gap-2">
             <Terminal className="w-5 h-5" /> AI WORKSPACE - PENDING DRAFTS
           </h2>
-          <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isFetching} />
+          <TabHeader search={search} setSearch={setSearch} onClearAll={handleClearAll} isLoading={isFetching || isClearing} />
 
         {posts.length === 0 ? (
           <div className="text-center py-20 text-zinc-500 border border-zinc-800 bg-black/40">

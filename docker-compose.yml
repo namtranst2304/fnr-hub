@@ -26,6 +26,8 @@ services:
       - db
     env_file:
       - ./api/.env
+    environment:
+      - DATABASE_URL=postgresql://admin:secretpassword@db:5432/automation_db?schema=public
     volumes:
       # Persist the Playwright session directory to avoid needing to login to Facebook repeatedly
       - fb_session_data:/app/fb_session

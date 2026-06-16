@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { SourcePage } from '@/types/scheduler';
 import { schedulerApi } from '@/app/api/schedulerApi';
+import { useConfirm } from '@/components/ui/ConfirmModal';
 
 export function useSources() {
   const [sources, setSources] = useState<SourcePage[]>([]);
@@ -9,6 +10,7 @@ export function useSources() {
   const [newSourceUrl, setNewSourceUrl] = useState('');
   const [newSourceName, setNewSourceName] = useState('');
   const [newSourceInterval, setNewSourceInterval] = useState(30);
+  const confirm = useConfirm();
 
   const fetchSources = useCallback(async () => {
     setIsSourcesLoading(true);
@@ -63,17 +65,23 @@ export function useSources() {
   };
 
   const handleDeleteSource = async (sourceId: number) => {
-    if (!confirm("Delete this source?")) return;
-    try {
-      const data = await schedulerApi.deleteSource(sourceId);
-      if (data.success) {
-        setSources(prev => prev.filter(s => s.id !== sourceId));
-        toast.success("Source deleted!");
+    confirm({
+      title: 'SYS.PURGE_SOURCE',
+      message: 'Are you sure you want to delete this source? This action cannot be undone.',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const data = await schedulerApi.deleteSource(sourceId);
+          if (data.success) {
+            setSources(prev => prev.filter(s => s.id !== sourceId));
+            toast.success("Source deleted!");
+          }
+        } catch (err) {
+          console.error('Delete source failed:', err);
+          toast.error("Failed to delete source");
+        }
       }
-    } catch (err) {
-      console.error('Delete source failed:', err);
-      toast.error("Failed to delete source");
-    }
+    });
   };
 
   return {
