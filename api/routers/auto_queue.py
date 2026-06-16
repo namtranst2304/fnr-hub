@@ -34,25 +34,25 @@ def auto_queue_post(req: AutoQueueRequest):
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # Prepare updates
                 updates = [
-                    ('status = %s', "SCHEDULED"),
+                    ("status = %s", "SCHEDULED"),
                     ('"scheduledAt" = %s', next_time),
-                    ('"updatedAt" = NOW()', None)
+                    ('"updatedAt" = NOW()', None),
                 ]
                 params = ["SCHEDULED", next_time]
-                
+
                 if req.rewrittenText:
                     updates.append(('"rewrittenText" = %s', req.rewrittenText))
                     params.append(req.rewrittenText)
-                    
+
                 if req.imageUrl:
                     updates.append(('"imageUrl" = %s', req.imageUrl))
                     params.append(req.imageUrl)
-                    
+
                 params.append(req.postId)
-                
+
                 set_clause = ", ".join([u[0] for u in updates])
                 query = f'UPDATE "Post" SET {set_clause} WHERE id = %s RETURNING *'
-                
+
                 cur.execute(query, tuple(p for p in params if p is not None))
                 post = cur.fetchone()
                 conn.commit()

@@ -18,11 +18,13 @@ def get_fb_credentials():
 
 def _post_to_fb(payload: dict, endpoint: str = "feed") -> dict:
     page_id, _ = get_fb_credentials()
-    
+
     if page_id == "MOCK_PAGE":
-        logger.info(f"[MOCK FACEBOOK API] Endpoint: {endpoint}, Received payload: {payload}")
+        logger.info(
+            f"[MOCK FACEBOOK API] Endpoint: {endpoint}, Received payload: {payload}"
+        )
         return {"id": f"mock_post_{os.urandom(4).hex()}"}
-        
+
     url = f"https://graph.facebook.com/v19.0/{page_id}/{endpoint}"
 
     try:
@@ -43,22 +45,33 @@ def publish_post_immediately(message: str, image_url: str = None) -> dict:
     Used by Auto Scheduler when scheduledAt <= now.
     """
     _, access_token = get_fb_credentials()
-    
+
     if image_url:
-        payload = {"caption": message, "url": image_url, "published": "true", "access_token": access_token}
+        payload = {
+            "caption": message,
+            "url": image_url,
+            "published": "true",
+            "access_token": access_token,
+        }
         return _post_to_fb(payload, endpoint="photos")
     else:
-        payload = {"message": message, "published": "true", "access_token": access_token}
+        payload = {
+            "message": message,
+            "published": "true",
+            "access_token": access_token,
+        }
         return _post_to_fb(payload, endpoint="feed")
 
 
-def schedule_post_for_later(message: str, scheduled_timestamp: int, image_url: str = None) -> dict:
+def schedule_post_for_later(
+    message: str, scheduled_timestamp: int, image_url: str = None
+) -> dict:
     """
     Tell Facebook to hold the post and publish it at the given Unix timestamp (seconds).
     Used by User Manual Scheduling via UI.
     """
     _, access_token = get_fb_credentials()
-    
+
     if image_url:
         payload = {
             "caption": message,

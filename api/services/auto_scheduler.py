@@ -36,10 +36,17 @@ def auto_scrape_job():
     - Rewrite with AI
     - Save to DB
     """
-    from services.db import (get_active_source_pages, get_auto_config,
-                             insert_scraped_post, update_source_last_scraped)
-    from services.scraper_job import (extract_post_id, rewrite_text_with_ai,
-                                      scrape_with_playwright)
+    from services.db import (
+        get_active_source_pages,
+        get_auto_config,
+        insert_scraped_post,
+        update_source_last_scraped,
+    )
+    from services.scraper_job import (
+        extract_post_id,
+        rewrite_text_with_ai,
+        scrape_with_playwright,
+    )
 
     try:
         config = get_auto_config()
@@ -115,8 +122,11 @@ def auto_post_job():
     where we want to control timing ourselves (published=true, post immediately).
     """
 
-    from services.db import (get_auto_config, get_posts_ready_to_publish,
-                             update_post_status)
+    from services.db import (
+        get_auto_config,
+        get_posts_ready_to_publish,
+        update_post_status,
+    )
 
     try:
         config = get_auto_config()

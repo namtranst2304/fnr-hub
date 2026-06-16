@@ -3,9 +3,15 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from services.db import (bulk_delete_by_status, create_custom_post, delete_post,
-                         get_paginated_posts, get_post_by_id, update_post_details,
-                         update_post_status)
+from services.db import (
+    bulk_delete_by_status,
+    create_custom_post,
+    delete_post,
+    get_paginated_posts,
+    get_post_by_id,
+    update_post_details,
+    update_post_status,
+)
 
 router = APIRouter(prefix="/api/v1/posts", tags=["Posts"])
 
@@ -27,6 +33,7 @@ class UpdatePostStatusRequest(BaseModel):
 
 class BulkDeleteRequest(BaseModel):
     statuses: str
+
 
 @router.get("")
 def list_posts(status: str = "", page: int = 1, limit: int = 50, search: str = ""):

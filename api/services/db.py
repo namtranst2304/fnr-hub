@@ -179,35 +179,49 @@ def get_all_posts() -> list[dict]:
             return [dict(row) for row in cur.fetchall()]
 
 
-def get_paginated_posts(statuses: tuple, limit: int, offset: int, search: str = "") -> dict:
+def get_paginated_posts(
+    statuses: tuple, limit: int, offset: int, search: str = ""
+) -> dict:
     """Get paginated posts with search and status filter."""
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             query_conds = []
             params = []
-            
+
             if statuses:
                 query_conds.append("status IN %s")
                 params.append(statuses)
-                
+
             if search:
-                query_conds.append('("originalText" ILIKE %s OR "rewrittenText" ILIKE %s)')
+                query_conds.append(
+                    '("originalText" ILIKE %s OR "rewrittenText" ILIKE %s)'
+                )
                 search_term = f"%{search}%"
                 params.extend([search_term, search_term])
-                
+
             where_clause = " AND ".join(query_conds) if query_conds else "1=1"
-            
+
             # Get total count
-            cur.execute(f'SELECT COUNT(*) as total FROM "Post" WHERE {where_clause}', tuple(params))
-            total = cur.fetchone()['total']
-            
+            cur.execute(
+                f'SELECT COUNT(*) as total FROM "Post" WHERE {where_clause}',
+                tuple(params),
+            )
+            total = cur.fetchone()["total"]
+
             # Get data
             params.extend([limit, offset])
             # If scheduled statuses, order by scheduledAt, else createdAt
-            order_by = '"scheduledAt" DESC NULLS LAST, "createdAt" DESC' if 'SCHEDULED' in statuses else '"createdAt" DESC'
-            cur.execute(f'SELECT * FROM "Post" WHERE {where_clause} ORDER BY {order_by} LIMIT %s OFFSET %s', tuple(params))
+            order_by = (
+                '"scheduledAt" DESC NULLS LAST, "createdAt" DESC'
+                if "SCHEDULED" in statuses
+                else '"createdAt" DESC'
+            )
+            cur.execute(
+                f'SELECT * FROM "Post" WHERE {where_clause} ORDER BY {order_by} LIMIT %s OFFSET %s',
+                tuple(params),
+            )
             posts = [dict(row) for row in cur.fetchall()]
-            
+
             return {"posts": posts, "total": total}
 
 
@@ -245,23 +259,23 @@ def update_post_schedule(
         with conn.cursor() as cur:
             updates = [
                 ('"scheduledAt" = %s', scheduled_at),
-                ('status = %s', status),
+                ("status = %s", status),
                 ('"fbPostId" = %s', fb_post_id),
-                ('"updatedAt" = NOW()', None)
+                ('"updatedAt" = NOW()', None),
             ]
             params = [scheduled_at, status, fb_post_id]
 
             if rewritten_text is not None:
                 updates.append(('"rewrittenText" = %s', rewritten_text))
                 params.append(rewritten_text)
-                
+
             if image_url is not None:
                 updates.append(('"imageUrl" = %s', image_url))
                 params.append(image_url)
 
             params.append(post_id)
             set_clause = ", ".join([u[0] for u in updates])
-            
+
             cur.execute(
                 f'UPDATE "Post" SET {set_clause} WHERE id = %s',
                 tuple(p for p in params if p is not None),
@@ -338,24 +352,24 @@ def update_post_details(post_id: int, updates: dict) -> dict:
 
     set_clauses = []
     values = []
-    
+
     allowed_keys = {"rewrittenText", "originalText", "imageUrl"}
     for k, v in updates.items():
         if k in allowed_keys:
             set_clauses.append(f'"{k}" = %s')
             values.append(v)
-            
+
     if not set_clauses:
         return get_post_by_id(post_id)
-        
+
     set_clauses.append('"updatedAt" = NOW()')
     values.append(post_id)
-    
+
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 f'UPDATE "Post" SET {", ".join(set_clauses)} WHERE id = %s RETURNING *',
-                values
+                values,
             )
             conn.commit()
             return dict(cur.fetchone())
