@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Terminal, ArrowRight, Check, X, Save, Edit3 } from 'lucide-react';
+import { FileText, Terminal, ArrowRight, X, Save, Edit3 } from 'lucide-react';
 import { Post } from '@/types/scheduler';
 import { formatDate } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,7 +58,7 @@ export function RawTab({
         toast.success(`Deleted ${data.deletedCount} posts!`);
         triggerRefresh();
       }
-    } catch (err: unknown) {
+    } catch {
       toast.error('Failed to clear posts');
     }
   };

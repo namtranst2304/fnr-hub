@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Save, Trash2, Clock, Bot, ImageIcon, Loader2, ArrowLeft, Terminal, Check } from 'lucide-react';
-import { Post, AutoConfig } from '@/types/scheduler';
+import { Post } from '@/types/scheduler';
 import { schedulerApi } from '@/app/api/schedulerApi';
 import { getCyberImageForText } from './generator/imageHelper';
 import { CyberTerminalLogs } from './generator/CyberTerminalLogs';
@@ -26,8 +26,6 @@ interface EditorTabProps {
   handleSaveDraft: () => void;
   handleDelete: () => void;
   handleSchedulePost: () => void;
-  handleAutoQueue: () => void;
-  config: AutoConfig;
 }
 
 export function EditorTab({
@@ -45,8 +43,6 @@ export function EditorTab({
   handleSaveDraft,
   handleDelete,
   handleSchedulePost,
-  handleAutoQueue,
-  config
 }: EditorTabProps) {
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -57,10 +53,9 @@ export function EditorTab({
 
   React.useEffect(() => {
     if (selectedPost) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditedImageUrl(selectedPost.imageUrl || '');
     }
-  }, [selectedPost]);
+  }, [selectedPost, setEditedImageUrl]);
 
   const handleAIGenerateText = async () => {
     if (!selectedPost) return;
@@ -115,7 +110,7 @@ export function EditorTab({
         toast.success(`Deleted ${data.deletedCount} drafts!`);
         triggerRefresh();
       }
-    } catch (err: unknown) {
+    } catch {
       toast.error('Failed to clear drafts');
     }
   };

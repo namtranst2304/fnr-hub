@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, CheckCircle2, X, Save, ArrowLeft, Trash2, CalendarClock } from 'lucide-react';
+import { X, Save, ArrowLeft, Trash2, CalendarClock } from 'lucide-react';
 import { Post } from '@/types/scheduler';
 import { formatDate } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -50,7 +50,7 @@ export function ScheduledTab({ refreshKey, triggerRefresh, onUpdateScheduledPost
         toast.success("Post deleted!");
         triggerRefresh();
       }
-    } catch (err: unknown) {
+    } catch {
       toast.error("Failed to delete post");
     }
   };
@@ -63,7 +63,7 @@ export function ScheduledTab({ refreshKey, triggerRefresh, onUpdateScheduledPost
         toast.success(`Deleted ${data.deletedCount} posts!`);
         triggerRefresh();
       }
-    } catch (err: unknown) {
+    } catch {
       toast.error('Failed to clear posts');
     }
   };
@@ -92,7 +92,6 @@ export function ScheduledTab({ refreshKey, triggerRefresh, onUpdateScheduledPost
                   {datePosts.map((post) => {
                     const isPending = post.status === 'SCHEDULED';
                     const isSuccess = post.status === 'POSTED';
-                    const isFail = post.status === 'FAILED';
                     
                     const borderColor = isPending ? 'border-[#fce205]/30' : isSuccess ? 'border-[#00f3ff]/30' : 'border-[#ff0000]/40';
                     const hoverBorderColor = isPending ? 'hover:border-[#fce205]/80' : isSuccess ? 'hover:border-[#00f3ff]/80' : 'hover:border-[#ff0000]/80';

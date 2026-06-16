@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { Post, SourcePage, AutoConfig, TabKey } from '../types/scheduler';
 import { schedulerApi } from '@/app/api/schedulerApi';
 
-export function useScheduler(initialPosts: Post[]) {
+export function useScheduler() {
   const [activeTab, setActiveTab] = useState<TabKey>('raw');
   const [direction, setDirection] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -34,9 +34,6 @@ export function useScheduler(initialPosts: Post[]) {
   // Sources State
   const [sources, setSources] = useState<SourcePage[]>([]);
   const [isSourcesLoading, setIsSourcesLoading] = useState(false);
-  const [newSourceUrl, setNewSourceUrl] = useState('');
-  const [newSourceName, setNewSourceName] = useState('');
-  const [newSourceInterval, setNewSourceInterval] = useState(30);
 
   // Config State
   const [config, setConfig] = useState<AutoConfig>({
@@ -82,9 +79,9 @@ export function useScheduler(initialPosts: Post[]) {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeTab === 'sources') fetchSources();
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeTab === 'settings') fetchConfig();
   }, [activeTab, fetchSources, fetchConfig]);
 
