@@ -333,13 +333,13 @@ export function AiWorkspaceTab({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-black border border-zinc-700 focus-within:border-[#00f3ff] px-3 py-1.5 transition-colors duration-300 ease-out">
-            <Clock className="w-4 h-4 text-zinc-500 mr-2" />
+          <div className="flex items-center bg-black border border-zinc-700 focus-within:border-[#00f3ff] focus-within:shadow-[0_0_10px_rgba(0,243,255,0.2)] px-3 py-1.5 transition-all duration-300 ease-out">
+            <Clock className="w-4 h-4 text-[#00f3ff] opacity-70 mr-2" />
             <input
               type="datetime-local"
               value={scheduleTime}
               onChange={(e) => setScheduleTime(e.target.value)}
-              className="bg-transparent text-xs text-zinc-300 outline-none [color-scheme:dark] cursor-pointer"
+              className="bg-transparent text-xs font-mono font-bold tracking-wider text-[#00f3ff] outline-none [color-scheme:dark] cursor-pointer"
             />
           </div>
           

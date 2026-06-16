@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Terminal, ArrowRight, X, Save, Edit3 } from 'lucide-react';
+import { Terminal, ArrowRight, X, Save, Edit3, Clock } from 'lucide-react';
 import { Post } from '@/types/scheduler';
 import { formatDate } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -259,13 +259,17 @@ export function RawQueueTab({
                 </div>
 
                 <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-zinc-800/50">
-                  <label className="text-[10px] uppercase tracking-widest text-[#00f3ff]">SCHEDULE_TIME (OPTIONAL)</label>
-                  <input
-                    type="datetime-local"
-                    value={scheduleTime}
-                    onChange={(e) => setScheduleTime(e.target.value)}
-                    className="w-full bg-black border border-zinc-700 p-2 text-xs text-zinc-300 outline-none focus:border-[#00f3ff] transition-colors [color-scheme:dark] cursor-pointer"
-                  />
+                  <label className="text-[10px] uppercase tracking-widest text-[#00f3ff] flex items-center gap-2">
+                    <Clock className="w-3 h-3" /> SCHEDULE_TIME (OPTIONAL)
+                  </label>
+                  <div className="flex items-center bg-black border border-zinc-700 focus-within:border-[#00f3ff] focus-within:shadow-[0_0_10px_rgba(0,243,255,0.2)] px-3 py-2 transition-all duration-300 ease-out">
+                    <input
+                      type="datetime-local"
+                      value={scheduleTime}
+                      onChange={(e) => setScheduleTime(e.target.value)}
+                      className="bg-transparent text-sm font-mono font-bold tracking-widest text-[#00f3ff] outline-none [color-scheme:dark] cursor-pointer w-full"
+                    />
+                  </div>
                 </div>
               </div>
 
