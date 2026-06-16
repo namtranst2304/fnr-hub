@@ -38,6 +38,8 @@ export function RawQueueTab({
   const [isClearing, setIsClearing] = useState(false);
   const confirm = useConfirm();
   const [editedImageUrl, setEditedImageUrl] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [isScheduling, setIsScheduling] = useState(false);
 
   const { posts, total, page, setPage, search, setSearch, isLoading, limit } = usePaginatedPosts('SCRAPED', refreshKey);
 
@@ -45,12 +47,57 @@ export function RawQueueTab({
     setSelectedPost(post);
     setEditedText(post.originalText || '');
     setEditedImageUrl(post.imageUrl || '');
+    setScheduleTime('');
   };
 
   const handleSave = async () => {
     if (selectedPost && handleUpdateRawPost) {
       await handleUpdateRawPost(selectedPost, editedText, editedImageUrl);
       setSelectedPost(null);
+    }
+  };
+
+  const handleCustomSchedule = async () => {
+    if (!selectedPost) return;
+    if (!scheduleTime) {
+      toast.error("Please select a date and time!");
+      return;
+    }
+    setIsScheduling(true);
+    try {
+      const data = await schedulerApi.scheduleFbPost(selectedPost.id, new Date(scheduleTime).toISOString(), editedText, editedImageUrl);
+      if (data.success) {
+        toast.success(`Scheduled successfully! ID: ${data.fbPostId}`);
+        triggerRefresh();
+        setSelectedPost(null);
+      } else {
+        toast.error(`Error: ${data.error}`);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Server Error: ${message}`);
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  const handleModalAutoQueue = async () => {
+    if (!selectedPost) return;
+    setIsScheduling(true);
+    try {
+      const data = await schedulerApi.autoQueuePost(selectedPost.id, editedText, editedImageUrl);
+      if (data.success) {
+        toast.success('Pushed to Schedule Queue!');
+        triggerRefresh();
+        setSelectedPost(null);
+      } else {
+        toast.error(`Error: ${data.error}`);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Server Error: ${message}`);
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -124,21 +171,21 @@ export function RawQueueTab({
                       actions={
                         <>
                           <button
-                            onClick={() => handleOpenModal(post)}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-400 border border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors"
+                            onClick={(e) => { e.stopPropagation(); handleOpenModal(post); }}
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-400 border border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors relative z-20 cursor-pointer"
                           >
                             <Edit3 className="w-3 h-3" />
-                            EDIT RAW
+                            EDIT & SCHEDULE
                           </button>
                           <button
-                            onClick={() => handlePushToSchedule(post)}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs text-blue-400 border border-blue-900/50 hover:bg-blue-900/20 transition-colors"
+                            onClick={(e) => { e.stopPropagation(); handlePushToSchedule(post); }}
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs text-[#00f3ff] border border-[#00f3ff]/50 hover:bg-[#00f3ff]/20 transition-colors relative z-20 cursor-pointer"
                           >
-                            DIRECT POST
+                            AUTO QUEUE
                           </button>
                           <button
-                            onClick={() => handleSendToAI(post)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/30 hover:bg-[#ff00ff] hover:text-black font-medium transition-all duration-300 ease-out text-xs tracking-wider"
+                            onClick={(e) => { e.stopPropagation(); handleSendToAI(post); }}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/30 hover:bg-[#ff00ff] hover:text-black font-medium transition-all duration-300 ease-out text-xs tracking-wider relative z-20 cursor-pointer"
                           >
                             MOVE TO AI
                             <ArrowRight className="w-3 h-3" />
@@ -210,21 +257,48 @@ export function RawQueueTab({
                     className="w-full bg-zinc-900/80 border border-zinc-800 p-2 text-xs text-zinc-300 outline-none focus:border-[#ff00ff] transition-colors"
                   />
                 </div>
+
+                <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-zinc-800/50">
+                  <label className="text-[10px] uppercase tracking-widest text-[#00f3ff]">SCHEDULE_TIME (OPTIONAL)</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    className="w-full bg-black border border-zinc-700 p-2 text-xs text-zinc-300 outline-none focus:border-[#00f3ff] transition-colors [color-scheme:dark] cursor-pointer"
+                  />
+                </div>
               </div>
 
-              <div className="p-4 border-t border-zinc-800 bg-zinc-900/50 flex flex-col sm:flex-row items-center justify-end gap-4">
+              <div className="p-4 border-t border-zinc-800 bg-zinc-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <button
                   onClick={() => setSelectedPost(null)}
-                  className="bg-transparent text-zinc-400 hover:text-zinc-200 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors duration-300 ease-out w-full sm:w-auto"
+                  className="bg-transparent text-zinc-400 hover:text-zinc-200 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors duration-300 ease-out shrink-0"
                 >
                   DISCARD
                 </button>
-                <button
-                  onClick={handleSave}
-                  className="bg-[#ff00ff]/20 border border-[#ff00ff] hover:bg-[#ff00ff] text-[#ff00ff] hover:text-black px-6 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 ease-out shadow-[0_0_10px_rgba(255,0,255,0.2)] w-full sm:w-auto flex items-center gap-2 justify-center"
-                >
-                  <Save className="w-4 h-4" /> COMMIT_UPDATE
-                </button>
+                <div className="flex items-center gap-3 flex-wrap justify-end">
+                  <button
+                    onClick={handleSave}
+                    disabled={isScheduling}
+                    className="bg-zinc-800/50 border border-zinc-700 hover:bg-zinc-800 text-zinc-300 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 ease-out flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" /> SAVE DRAFT
+                  </button>
+                  <button
+                    onClick={handleModalAutoQueue}
+                    disabled={isScheduling}
+                    className="bg-[#00f3ff]/10 border border-[#00f3ff]/50 hover:bg-[#00f3ff]/30 text-[#00f3ff] px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 ease-out flex items-center gap-2 disabled:opacity-50"
+                  >
+                    AUTO QUEUE
+                  </button>
+                  <button
+                    onClick={handleCustomSchedule}
+                    disabled={isScheduling}
+                    className="bg-[#00f3ff]/20 border border-[#00f3ff] hover:bg-[#00f3ff] text-[#00f3ff] hover:text-black px-6 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 ease-out shadow-[0_0_10px_rgba(0,243,255,0.2)] flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isScheduling ? "SCHEDULING..." : "SCHEDULE NOW"}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

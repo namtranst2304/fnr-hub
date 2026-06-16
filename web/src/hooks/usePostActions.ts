@@ -140,11 +140,7 @@ export function usePostActions(
       const data = await schedulerApi.updatePostStatus(post.id, 'DRAFT');
       if (data.success) {
         triggerRefresh();
-        changeTab('editor');
-        setSelectedPost(post);
-        setEditedText(post.rewrittenText || post.originalText || '');
-        setEditedImageUrl(post.imageUrl || '');
-        toast.success('Moved to AI Workspace!');
+        toast.success('Moved to AI Workspace (Drafts)!');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -191,17 +187,20 @@ export function usePostActions(
   };
 
   const handlePushToScheduleDirect = async (post: Post) => {
+    const toastId = toast.loading("Processing...");
     setIsLoading(true);
     try {
       const data = await schedulerApi.autoQueuePost(post.id, post.rewrittenText || post.originalText);
       if (data.success) {
         triggerRefresh();
         changeTab('scheduled');
-        toast.success('Pushed to Schedule Queue!');
+        toast.success('Pushed to Schedule Queue!', { id: toastId });
+      } else {
+        toast.error('Error: ' + data.error, { id: toastId });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      toast.error('Failed to schedule: ' + message);
+      toast.error('Failed to schedule: ' + message, { id: toastId });
     } finally {
       setIsLoading(false);
     }

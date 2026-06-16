@@ -420,6 +420,9 @@ def get_next_auto_schedule_time() -> str:
                 from datetime import datetime, timezone
 
                 now = datetime.now(timezone.utc)
+                if next_time.tzinfo is None:
+                    next_time = next_time.replace(tzinfo=timezone.utc)
+                
                 if next_time < now:
                     next_time = now + timedelta(minutes=10)
                 return next_time.isoformat()

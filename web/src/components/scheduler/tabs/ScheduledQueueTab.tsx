@@ -133,7 +133,10 @@ export function ScheduledQueueTab({ refreshKey, triggerRefresh, onUpdateSchedule
                                   EDIT <ArrowLeft className="w-3 h-3 rotate-180" />
                                 </button>
                                 <button
-                                  onClick={() => { setSelectedPost(post); handleCancel(); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onCancelSchedule) onCancelSchedule(post);
+                                  }}
                                   className="text-[10px] text-orange-400 hover:bg-orange-400/20 px-2 py-1 font-bold flex items-center gap-1 transition-colors"
                                 >
                                   CANCEL/BACK TO AI
