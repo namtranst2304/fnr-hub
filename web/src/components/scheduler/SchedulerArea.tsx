@@ -3,39 +3,34 @@
 import { Terminal } from 'lucide-react';
 import { Post } from '@/types/scheduler';
 import { useScheduler } from '@/hooks/useScheduler';
+import { useSources } from '@/hooks/useSources';
+import { useAutoSettings } from '@/hooks/useAutoSettings';
+import { usePostActions } from '@/hooks/usePostActions';
 import { TABS } from '@/lib/constants';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { RawTab } from './tabs/RawTab';
-import { ScheduledTab } from './tabs/ScheduledTab';
-import { SourcesTab } from './tabs/SourcesTab';
-import { SettingsTab } from './tabs/SettingsTab';
-import { EditorTab } from './tabs/EditorTab';
+import { RawQueueTab } from './tabs/RawQueueTab';
+import { ScheduledQueueTab } from './tabs/ScheduledQueueTab';
+import { DataSourcesTab } from './tabs/DataSourcesTab';
+import { AutoConfigTab } from './tabs/AutoConfigTab';
+import { AiWorkspaceTab } from './tabs/AiWorkspaceTab';
 
 // ─── Component ────────────────────────────────────────────────
 
-export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
+export function SchedulerArea() {
   const {
     activeTab,
     direction,
     changeTab,
-    
-    selectedPost,
-    editedText,
-    setEditedText,
-    editedImageUrl,
-    setEditedImageUrl,
-    scheduleTime,
-    setScheduleTime,
-    isLoading,
-    openModal,
-    closeModal,
-
+    refreshKey,
+    triggerRefresh,
     scrapeUrl,
     setScrapeUrl,
     isScraping,
     handleScrape,
-    
+  } = useScheduler();
+
+  const {
     sources,
     isSourcesLoading,
     newSourceUrl,
@@ -47,18 +42,28 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
     handleAddSource,
     handleToggleSource,
     handleDeleteSource,
-    
+  } = useSources();
+
+  const {
     config,
     isConfigLoading,
     schedulerRunning,
     fetchConfig,
     handleToggleConfig,
     handleUpdateInterval,
+  } = useAutoSettings();
 
-    posts,
-    rawPosts,
-    scheduledPosts,
-    
+  const {
+    selectedPost,
+    editedText,
+    setEditedText,
+    editedImageUrl,
+    setEditedImageUrl,
+    scheduleTime,
+    setScheduleTime,
+    isLoading,
+    openModal,
+    closeModal,
     handleSaveDraft,
     handleDelete,
     handleSchedulePost,
@@ -68,7 +73,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
     handleUpdateRawPost,
     handlePushToScheduleDirect,
     handleCreateCustomPost
-  } = useScheduler(initialPosts);
+  } = usePostActions(triggerRefresh, changeTab);
 
 
 
@@ -103,12 +108,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
         <div className="flex flex-col sm:flex-row gap-4 items-center flex-1 justify-center">
           {/* Tabs */}
           <div className="flex bg-black border border-zinc-800 p-1">
-            {TABS.map(tab => {
-              const count = tab.key === 'raw' ? rawPosts.length : 
-                            tab.key === 'editor' ? posts.filter(p => p.status === 'DRAFT').length :
-                            tab.key === 'scheduled' ? scheduledPosts.length : 
-                            tab.key === 'sources' ? sources.length : undefined;
-              return (
+            {TABS.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => changeTab(tab.key)}
@@ -120,15 +120,8 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
               >
                 {tab.icon}
                 <span className="hidden sm:inline tracking-wider">{tab.label}</span>
-                {count !== undefined && (
-                  <span className={`ml-1 px-1.5 py-0.5 text-[10px] ${
-                    activeTab === tab.key ? 'bg-[#00f3ff] text-black' : 'bg-zinc-800 text-zinc-400'
-                  }`}>
-                    {count.toString().padStart(2, '0')}
-                  </span>
-                )}
               </button>
-            )})}
+            ))}
           </div>
 
         </div>
@@ -148,7 +141,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
           >
 
             {activeTab === 'raw' && (
-              <RawTab
+              <RawQueueTab
                 refreshKey={refreshKey}
                 triggerRefresh={triggerRefresh}
                 scrapeUrl={scrapeUrl}
@@ -163,7 +156,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
             {/* ──── TAB: EDITOR ──── */}
             {activeTab === 'editor' && (
-              <EditorTab
+              <AiWorkspaceTab
                 refreshKey={refreshKey}
                 triggerRefresh={triggerRefresh}
                 selectedPost={selectedPost}
@@ -185,14 +178,12 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
                 handleSaveDraft={handleSaveDraft}
                 handleDelete={handleDelete}
                 handleSchedulePost={handleSchedulePost}
-                handleAutoQueue={handleAutoQueue}
-                config={config}
               />
             )}
 
             {/* ──── TAB: SCHEDULED ──── */}
             {activeTab === 'scheduled' && (
-              <ScheduledTab 
+              <ScheduledQueueTab 
                 refreshKey={refreshKey}
                 triggerRefresh={triggerRefresh}
                 onUpdateScheduledPost={handleUpdateScheduledPost}
@@ -202,7 +193,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
             {/* ──── TAB: SOURCES ──── */}
             {activeTab === 'sources' && (
-              <SourcesTab
+              <DataSourcesTab
                 sources={sources}
                 newSourceUrl={newSourceUrl}
                 setNewSourceUrl={setNewSourceUrl}
@@ -219,7 +210,7 @@ export function SchedulerArea({ initialPosts }: { initialPosts: Post[] }) {
 
             {/* ──── TAB: SETTINGS ──── */}
             {activeTab === 'settings' && (
-              <SettingsTab
+              <AutoConfigTab
                 config={config}
                 schedulerRunning={schedulerRunning}
                 isConfigLoading={isConfigLoading}

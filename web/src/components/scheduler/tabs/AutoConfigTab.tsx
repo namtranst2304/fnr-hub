@@ -71,7 +71,7 @@ const ConfigCard = ({
   </div>
 );
 
-export function SettingsTab({
+export function AutoConfigTab({
   config,
   schedulerRunning,
   isConfigLoading,

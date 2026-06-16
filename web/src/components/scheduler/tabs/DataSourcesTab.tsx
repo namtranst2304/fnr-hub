@@ -16,7 +16,7 @@ interface SourcesTabProps {
   handleDeleteSource: (sourceId: number) => void;
 }
 
-export function SourcesTab({
+export function DataSourcesTab({
   sources,
   newSourceUrl,
   setNewSourceUrl,

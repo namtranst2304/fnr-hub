@@ -5,6 +5,7 @@ import { formatDate } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePaginatedPosts } from '@/hooks/usePaginatedPosts';
 import { groupPostsByDate, TabHeader, Pagination } from './TabUtils';
+import { PostCard, PostCardTheme } from './PostCard';
 import { schedulerApi } from '@/app/api/schedulerApi';
 import toast from 'react-hot-toast';
 
@@ -15,7 +16,7 @@ interface ScheduledTabProps {
   onCancelSchedule?: (post: Post) => Promise<void>;
 }
 
-export function ScheduledTab({ refreshKey, triggerRefresh, onUpdateScheduledPost, onCancelSchedule }: ScheduledTabProps) {
+export function ScheduledQueueTab({ refreshKey, triggerRefresh, onUpdateScheduledPost, onCancelSchedule }: ScheduledTabProps) {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editedText, setEditedText] = useState('');
   const [editedImageUrl, setEditedImageUrl] = useState('');
@@ -92,42 +93,16 @@ export function ScheduledTab({ refreshKey, triggerRefresh, onUpdateScheduledPost
                   {datePosts.map((post) => {
                     const isPending = post.status === 'SCHEDULED';
                     const isSuccess = post.status === 'POSTED';
-                    
-                    const borderColor = isPending ? 'border-[#fce205]/30' : isSuccess ? 'border-[#00f3ff]/30' : 'border-[#ff0000]/40';
-                    const hoverBorderColor = isPending ? 'hover:border-[#fce205]/80' : isSuccess ? 'hover:border-[#00f3ff]/80' : 'hover:border-[#ff0000]/80';
-                    const bgClass = isPending ? 'bg-black/60' : isSuccess ? 'bg-black/40 opacity-80' : 'bg-[#ff0000]/10';
+                    const theme: PostCardTheme = isPending ? 'yellow' : isSuccess ? 'cyan' : 'red';
 
                     return (
-                      <div 
-                        key={post.id} 
-                        className={`${bgClass} p-5 border ${borderColor} shadow-lg relative overflow-hidden group ${hoverBorderColor} transition-all duration-300 ease-out`}
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <span className={`px-2 py-0.5 text-[10px] font-bold tracking-widest border ${
-                            isPending ? 'bg-[#fce205]/20 text-[#fce205] border-[#fce205]/40' :
-                            isSuccess ? 'bg-[#00f3ff]/20 text-[#00f3ff] border-[#00f3ff]/40' :
-                            'bg-[#ff0000]/20 text-[#ff0000] border-[#ff0000]/40 animate-pulse'
-                          }`}>
-                            {post.status}
-                          </span>
-                          <span className="text-xs text-zinc-400 bg-zinc-900 px-2 py-1 border border-zinc-800">
-                            {post.scheduledAt ? formatDate(post.scheduledAt, 'en-GB') : 'UNKNOWN'}
-                          </span>
-                        </div>
-                        
-                        <div className="flex gap-4 mb-3">
-                          {post.imageUrl && (
-                            <div className={`w-16 h-16 shrink-0 border ${borderColor} overflow-hidden relative`}>
-                              <img src={post.imageUrl} alt="thumbnail" className={`w-full h-full object-cover ${!isPending ? 'grayscale' : ''}`} />
-                            </div>
-                          )}
-                          <p className="text-sm text-zinc-300 line-clamp-3 flex-1">{post.rewrittenText}</p>
-                        </div>
-                        
-                        <div className="flex justify-between items-end mt-4 pt-4 border-t border-zinc-800/50">
-                          <p className="text-[10px] text-zinc-600">TRG_ID: {post.fbPostId || 'N/A'}</p>
-                          
-                          <div className="flex gap-2">
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        theme={theme}
+                        dateLabel={post.scheduledAt ? formatDate(post.scheduledAt, 'en-GB') : 'UNKNOWN'}
+                        actions={
+                          <>
                             {isPending && (
                               <>
                                 <button
@@ -150,9 +125,9 @@ export function ScheduledTab({ refreshKey, triggerRefresh, onUpdateScheduledPost
                             >
                               <Trash2 className="w-3 h-3" /> DELETE
                             </button>
-                          </div>
-                        </div>
-                      </div>
+                          </>
+                        }
+                      />
                     );
                   })}
                 </div>

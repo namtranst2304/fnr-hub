@@ -8,6 +8,7 @@ import { CyberImageTerminalLogs } from './generator/CyberImageTerminalLogs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePaginatedPosts } from '@/hooks/usePaginatedPosts';
 import { groupPostsByDate, TabHeader, Pagination } from './TabUtils';
+import { PostCard } from './PostCard';
 import toast from 'react-hot-toast';
 
 interface EditorTabProps {
@@ -28,8 +29,9 @@ interface EditorTabProps {
   handleSchedulePost: () => void;
 }
 
-export function EditorTab({
-  posts,
+export function AiWorkspaceTab({
+  refreshKey,
+  triggerRefresh,
   selectedPost,
   setSelectedPost,
   handleCreateCustomPost,
@@ -166,21 +168,17 @@ export function EditorTab({
                 </h3>
                 <div className="space-y-4">
                   {datePosts.map((post) => (
-                    <div
+                    <PostCard
                       key={post.id}
+                      post={post}
+                      theme="cyan"
                       onClick={() => setSelectedPost(post)}
-                      className="bg-black/60 p-5 border border-zinc-700 hover:border-[#00f3ff] hover:shadow-[0_0_15px_rgba(0,243,255,0.2)] flex items-start gap-4 cursor-pointer transition-all duration-300 ease-out group relative overflow-hidden"
-                    >
-                      <div className="absolute top-0 left-0 w-1 h-full bg-zinc-700 group-hover:bg-[#00f3ff]" />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-zinc-300 font-medium text-sm leading-relaxed group-hover:text-white">
-                          {post.rewrittenText ? post.rewrittenText.substring(0, 150) : post.originalText.substring(0, 150)}...
-                        </h3>
-                      </div>
-                      <div className="shrink-0 pl-4 text-[#00f3ff] font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1">
-                        EDIT <ArrowLeft className="w-3 h-3 rotate-180" />
-                      </div>
-                    </div>
+                      actions={
+                        <div className="text-[#00f3ff] font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1">
+                          EDIT <ArrowLeft className="w-3 h-3 rotate-180" />
+                        </div>
+                      }
+                    />
                   ))}
                 </div>
               </div>
