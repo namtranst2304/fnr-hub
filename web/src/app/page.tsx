@@ -24,7 +24,7 @@ export default async function SchedulerPage() {
             SYS.WARNING: DB_CONNECTION_LOST. CHECK .ENV CONFIGURATION
           </div>
         )}
-        <SchedulerArea initialPosts={posts} />
+        <SchedulerArea />
       </div>
     </div>
   );
